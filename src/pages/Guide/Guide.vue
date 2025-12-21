@@ -1,104 +1,162 @@
 <template>
 	<view class="container">
-		<!-- Custom Header -->
-		<view class="custom-header">
-			<view class="status-bar"></view>
-			<view class="nav-bar">
-				<view class="left-icon" @click="goBack">
-					<uni-icons type="arrowleft" size="20" color="#fff"></uni-icons>
+		<!-- 自定义导航栏 -->
+		<view class="custom-header" :style="{ paddingTop: statusBarHeight + 'px' }">
+			<view class="nav-content">
+				<view class="nav-left" @click="goBack">
+					<image src="/static/back.png" mode="widthFix" style="width: 24px; height: 24px;"></image>
 				</view>
-				<view class="title">涉外政务</view>
-				<view class="right-placeholder"></view>
+				<text class="nav-title">指南</text>
+				<view class="nav-right"></view>
 			</view>
 		</view>
 
-		<!-- Content Area -->
-		<scroll-view scroll-y class="content" :style="{ paddingTop: headerHeight + 'px' }">
-			<view class="section" v-for="(section, index) in sections" :key="index">
-				<view class="section-header" @click="toggleSection(index)">
-					<view class="header-left">
-						<uni-icons :type="section.icon" size="24" color="#333" class="section-icon"></uni-icons>
-						<text class="section-title">{{ section.title }}</text>
+		<!-- 内容区域 -->
+		<scroll-view scroll-y class="main-content" :style="{ paddingTop: (statusBarHeight + 44) + 'px' }">
+			<!-- 选择国家 -->
+			<view class="section-card">
+				<text class="section-title">选择国家</text>
+				<scroll-view scroll-x class="country-scroll" :show-scrollbar="false">
+					<view class="country-list">
+						<view class="country-item" :class="{ active: currentCountryId === item.id }"
+							v-for="(item, index) in countries" :key="index" @click="selectCountry(item)">
+							<view class="country-img-box" :class="{ active: currentCountryId === item.id }">
+								<image class="country-img" :src="item.nationalFlagUrl" mode="aspectFill"></image>
+							</view>
+							<text class="country-name">{{ item.countryName }}</text>
+						</view>
 					</view>
-					<view class="header-right">
-						<text class="collapse-text">{{ section.collapsed ? '展开' : '收起' }}</text>
+				</scroll-view>
+			</view>
+
+			<!-- 指南列表 -->
+			<view class="guide-list">
+				<view class="guide-item" v-for="(item, index) in guideList" :key="index" @click="goToDetail(item)">
+					<image class="guide-img" :src="item.guideImageUrl" mode="aspectFill"></image>
+					<view class="guide-info">
+						<text class="guide-title">{{ item.guideName }}</text>
+						<text class="guide-desc">{{ formatContent(item.content) }}</text>
 					</view>
 				</view>
 				
-				<view class="section-body" v-if="!section.collapsed">
-					<view class="grid-container">
-						<view class="grid-item" v-for="(item, idx) in section.items" :key="idx">
-							<view class="card">
-								<view class="icon-wrapper">
-									<uni-icons :type="item.icon" size="24" color="#1e90ff"></uni-icons>
-								</view>
-								<text class="card-text">{{ item.name }}</text>
-							</view>
-						</view>
-					</view>
+				<!-- 空状态 -->
+				<view v-if="guideList.length === 0" class="empty-state">
+					<text>暂无相关指南</text>
 				</view>
 			</view>
-			<!-- Bottom spacing -->
-			<view style="height: 40rpx;"></view>
 		</scroll-view>
 	</view>
 </template>
 
 <script>
+	import UniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue'
+	import {
+		getCountryList
+	} from '@/api/country.js'
+	import {
+		getGuideList,
+		getServiceTypeList
+	} from '@/api/service.js'
+
 	export default {
+		components: {
+			UniIcons
+		},
 		data() {
 			return {
-				headerHeight: 0,
-				statusBarHeight: 0,
-				sections: [
-					{
-						title: '出口贸易服务',
-						icon: 'paperplane-filled', // Placeholder for Ship icon
-						collapsed: false,
-						items: [
-							{ name: '报关报检服务', icon: 'list' },
-							{ name: '国际物流安排', icon: 'map-filled' },
-							{ name: '外汇结算服务', icon: 'wallet-filled' },
-							{ name: '出口退税办理', icon: 'compose' }
-						]
-					},
-					{
-						title: '境外投资服务',
-						icon: 'world-filled', // Placeholder for Globe icon
-						collapsed: false,
-						items: [
-							{ name: '投资环境评估', icon: 'globe-filled' },
-							{ name: '项目可行性研究', icon: 'checkbox-filled' },
-							{ name: '海外公司注册', icon: 'home-filled' },
-							{ name: '投资融资服务', icon: 'vip-filled' }
-						]
-					},
-					{
-						title: '综合支持服务',
-						icon: 'staff-filled', // Placeholder for Support icon
-						collapsed: false,
-						items: [
-							{ name: '多语言翻译服务', icon: 'chat-filled' },
-							{ name: '法律文书公证', icon: 'auth-filled' },
-							{ name: '商务谈判支持', icon: 'chatboxes-filled' },
-							{ name: '市场调研报告', icon: 'search' }
-						]
-					}
-				]
+				statusBarHeight: 20,
+				countries: [],
+				currentCountryId: null,
+				guideList: []
 			}
 		},
 		onLoad() {
-			const systemInfo = uni.getSystemInfoSync();
-			this.statusBarHeight = systemInfo.statusBarHeight;
-			// Navbar height usually 44px
-			this.headerHeight = this.statusBarHeight + 44;
+			const sysInfo = uni.getSystemInfoSync();
+			this.statusBarHeight = sysInfo.statusBarHeight;
+			this.fetchData();
 		},
 		methods: {
 			goBack() {
 				uni.navigateBack();
 			},
-			toggleSection(index) {
-				this.sections[index].collapsed = !this.sections[index].collapsed;
+			async fetchData() {
+				await this.fetchCountries();
+			},
+			async fetchCountries() {
+				try {
+					const res = await getCountryList();
+					const list = res.data?.rows || res.rows || res.data || [];
+					this.countries = list;
+					if (this.countries.length > 0) {
+						// 默认选中第一个
+						this.selectCountry(this.countries[0]);
+					}
+				} catch (e) {
+					console.error('获取国家列表失败', e);
+				}
+			},
+			selectCountry(item) {
+				this.currentCountryId = item.id;
+				this.fetchGuides(item.id);
+			},
+			async fetchGuides(countryId) {
+				try {
+					uni.showLoading({
+						title: '加载中...'
+					});
+					
+					// 1. 获取该国家下的服务类型ID列表，用于后续辅助筛选
+					let validServiceTypeIds = [];
+					try {
+						const typeRes = await getServiceTypeList({ countryId });
+						const types = typeRes.data?.rows || typeRes.rows || typeRes.data || [];
+						validServiceTypeIds = types.map(t => t.serviceTypeId || t.id || t.typeId).filter(id => id);
+					} catch (e) {
+						console.error('获取服务类型失败', e);
+					}
+
+					// 2. 获取指南列表
+					const res = await getGuideList({
+						countryId,
+						country_id: countryId // 尝试多种参数格式
+					});
+					let list = res.data?.rows || res.rows || res.data || [];
+					
+					// 3. 前端兜底筛选
+					if (list.length > 0) {
+						const firstItem = list[0];
+						
+						// 优先使用 countryId/country_id 筛选
+						if (firstItem.countryId !== undefined) {
+							list = list.filter(item => item.countryId == countryId);
+						} else if (firstItem.country_id !== undefined) {
+							list = list.filter(item => item.country_id == countryId);
+						} 
+						// 如果没有国家字段，但有 servicesTypeId
+						else if (firstItem.servicesTypeId !== undefined) {
+							// 筛选条件：servicesTypeId 等于当前国家ID，或者属于该国家下的服务类型ID
+							list = list.filter(item => item.servicesTypeId == countryId || validServiceTypeIds.includes(item.servicesTypeId));
+						}
+					}
+					
+					this.guideList = list;
+				} catch (e) {
+					console.error('获取指南列表失败', e);
+				} finally {
+					uni.hideLoading();
+				}
+			},
+			formatContent(content) {
+				if (!content) return '';
+				// 去除HTML标签
+				let text = content.replace(/<[^>]+>/g, "");
+				// 截取前50个字符
+				return text.length > 40 ? text.substring(0, 40) + '...' : text;
+			},
+			goToDetail(item) {
+				uni.navigateTo({
+					url: `/pages/Service/funtion/detail?id=${item.id}&type=guide`
+				});
 			}
 		}
 	}
@@ -110,6 +168,7 @@
 		background-color: #f5f7fa;
 	}
 
+	/* 自定义导航栏 */
 	.custom-header {
 		position: fixed;
 		top: 0;
@@ -117,125 +176,161 @@
 		width: 100%;
 		background-color: #1e90ff;
 		z-index: 999;
-		color: #fff;
-		
-		.status-bar {
-			height: var(--status-bar-height);
-		}
-		
-		.nav-bar {
-			height: 44px;
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			padding: 0 20rpx;
-			
-			.left-icon {
-				width: 60rpx;
-				height: 60rpx;
-				background-color: rgba(255, 255, 255, 0.2);
-				border-radius: 50%;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-			}
-			
-			.title {
-				font-size: 34rpx;
-				font-weight: bold;
-			}
-			
-			.right-placeholder {
-				width: 60rpx;
-			}
-		}
 	}
 
-	.content {
-		padding: 20rpx;
-		box-sizing: border-box;
-		height: 100vh;
-	}
-
-	.section {
-		background-color: #fff;
-		margin-bottom: 20rpx;
-		border-radius: 12rpx;
-		padding: 0 20rpx;
-	}
-
-	.section-header {
+	.nav-content {
+		height: 44px;
 		display: flex;
-		justify-content: space-between;
 		align-items: center;
-		padding: 30rpx 0;
-		border-bottom: 1px solid #f0f0f0;
-		
-		.header-left {
-			display: flex;
-			align-items: center;
-			gap: 10rpx;
-			
-			.section-icon {
-				color: #1e90ff !important; 
-			}
-			
-			.section-title {
-				font-size: 30rpx;
-				font-weight: bold;
-				color: #333;
-			}
-		}
-		
-		.header-right {
-			.collapse-text {
-				font-size: 24rpx;
-				color: #999;
-			}
-		}
-	}
-
-	.section-body {
-		padding: 20rpx 0;
-	}
-
-	.grid-container {
-		display: flex;
-		flex-wrap: wrap;
 		justify-content: space-between;
+		padding: 0 15px;
 	}
 
-	.grid-item {
-		width: 48%;
-		margin-bottom: 20rpx;
+	.nav-left,
+	.nav-right {
+		width: 40px;
+		display: flex;
+		align-items: center;
 	}
 
-	.card {
-		background-color: #fff;
-		border: 1px solid #ebeef5;
-		border-radius: 16rpx;
-		padding: 40rpx 20rpx;
+	.nav-title {
+		color: #ffffff;
+		font-size: 18px;
+		font-weight: 500;
+	}
+
+	/* 内容区域 */
+	.main-content {
+		padding: 15px;
+		box-sizing: border-box;
+	}
+
+	/* 国家选择区域 */
+	.section-card {
+		background-color: #ffffff;
+		border-radius: 12px;
+		padding: 20px;
+		margin-bottom: 20px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+	}
+
+	.section-title {
+		font-size: 18px;
+		font-weight: bold;
+		color: #333333;
+		margin-bottom: 15px;
+		display: block;
+	}
+
+	.country-scroll {
+		width: 100%;
+		white-space: nowrap;
+	}
+
+	.country-list {
+		display: flex;
+		align-items: flex-start;
+	}
+
+	.country-item {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		margin-right: 20px;
+		opacity: 0.6;
+		transition: all 0.3s;
+	}
+	
+	.country-item.active {
+		opacity: 1;
+	}
+
+	.country-img-box {
+		width: 60px;
+		height: 60px;
+		border-radius: 50%;
+		overflow: hidden;
+		margin-bottom: 8px;
+		border: 2px solid transparent;
+		transition: all 0.3s;
+	}
+	
+	.country-img-box.active {
+		border-color: #1e90ff;
+		box-shadow: 0 4px 12px rgba(30, 144, 255, 0.3);
+	}
+
+	.country-img {
+		width: 100%;
+		height: 100%;
+	}
+
+	.country-name {
+		font-size: 14px;
+		color: #333333;
+	}
+	
+	.country-item.active .country-name {
+		color: #1e90ff;
+		font-weight: bold;
+	}
+
+	/* 指南列表区域 */
+	.guide-list {
+		background-color: #ffffff;
+		border-radius: 12px;
+		padding: 0 20px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+	}
+
+	.guide-item {
+		display: flex;
+		padding: 20px 0;
+		border-bottom: 1px solid #f0f0f0;
+	}
+
+	.guide-item:last-child {
+		border-bottom: none;
+	}
+
+	.guide-img {
+		width: 80px;
+		height: 80px;
+		border-radius: 50%; /* 圆形图片 */
+		margin-right: 15px;
+		flex-shrink: 0;
+		background-color: #f5f5f5;
+	}
+
+	.guide-info {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
 		justify-content: center;
-		box-shadow: 0 2rpx 12rpx 0 rgba(0, 0, 0, 0.05);
-		
-		.icon-wrapper {
-			width: 80rpx;
-			height: 80rpx;
-			background-color: #e6f1fc;
-			border-radius: 50%;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			margin-bottom: 20rpx;
-		}
-		
-		.card-text {
-			font-size: 26rpx;
-			color: #333;
-			font-weight: 500;
-		}
+	}
+
+	.guide-title {
+		font-size: 16px;
+		font-weight: bold;
+		color: #333333;
+		margin-bottom: 8px;
+		line-height: 1.4;
+	}
+
+	.guide-desc {
+		font-size: 13px;
+		color: #999999;
+		line-height: 1.5;
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2; /* 限制显示两行 */
+		overflow: hidden;
+	}
+	
+	.empty-state {
+		padding: 40px 0;
+		text-align: center;
+		color: #999999;
+		font-size: 14px;
 	}
 </style>

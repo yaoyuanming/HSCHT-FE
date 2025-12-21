@@ -10,10 +10,10 @@
 
 		<!-- 区域Tab -->
 		<view class="region-tabs">
-			<view class="tab-item" :class="{ active: currentTab === index }" v-for="(item, index) in continents"
+			<view class="tab-item" :class="{ active: currentTab === index }" v-for="(item, index) in allCountries"
 				:key="index" @click="selectTab(index)">
 				<view class="tab-dot" :class="{ 'active-dot': currentTab === index }"></view>
-				<text class="tab-text">{{ item }}</text>
+				<text class="tab-text">{{ item.countryName }}</text>
 			</view>
 		</view>
 
@@ -30,7 +30,7 @@
 
 		<!-- 底部详情列表 (使用scroll-view) -->
 		<scroll-view scroll-y="true" class="detail-list-scroll">
-			<view class="detail-list" v-if="currentService !== -1">
+			<view class="detail-list">
 				<view class="detail-item" v-for="(item, index) in articles" :key="index" @click="goToDetail(item)">
 					<image class="detail-img" :src="item.articleImageUrl" mode="aspectFill"></image>
 					<text class="detail-title">{{ item.articleName }}</text>
@@ -64,16 +64,15 @@
 		data() {
 			return {
 				currentTab: 0,
-				currentService: 0,
+				currentService: -1,
 				services: [],
 				articles: [],
-				continents: ['亚洲', '欧洲', '非洲', '北美洲', '南美洲', '大洋洲', '南极洲']
 			}
 		},
 		watch: {
 			allCountries: {
 				handler(newVal) {
-					// this.updateContinents()
+					// 
 				},
 				immediate: true
 			},
@@ -102,47 +101,35 @@
 			 */
 			initDataByCountry(country) {
 				if (!country || !country.id) return
-				
-				// 1. 根据 country.continent 自动确定所属洲
-				if (country.continent) {
-					// 尝试匹配，处理可能存在的空格
-					const continentName = country.continent.trim()
-					const index = this.continents.indexOf(continentName)
+
+				// 1. 根据 country.id 自动选中对应Tab
+				if (this.allCountries && this.allCountries.length > 0) {
+					const index = this.allCountries.findIndex(item => item.id === country.id)
 					if (index !== -1) {
 						this.currentTab = index
 					}
 				}
-				
+
 				// 2. 根据 countryId 筛选服务类型
 				this.fetchServiceTypes({
 					countryId: country.id
 				})
 			},
-			updateContinents() {
-				// if (this.allCountries && this.allCountries.length > 0) {
-				// 	// 提取所有不重复的 continent
-				// 	const continentSet = new Set()
-				// 	this.allCountries.forEach(country => {
-				// 		if (country.continent) {
-				// 			continentSet.add(country.continent)
-				// 		}
-				// 	})
-				// 	this.continents = Array.from(continentSet)
-				// }
-			},
 			async fetchServiceTypes(params = {}) {
 				try {
 					// 重置选中状态
-					this.currentService = 0
+					this.currentService = -1
 					this.services = []
 					this.articles = []
 					
 					const res = await getServiceTypeList(params)
 					this.services = res.data?.rows || res.rows || res.data || []
 					
-					// 3. 默认选中第一个服务类型，触发文章筛选
-					if (this.services.length > 0) {
-						this.selectService(0)
+					// 默认不选中服务，直接加载该国家的所有文章
+					if (params.countryId) {
+						this.fetchArticles({
+							countryId: params.countryId
+						})
 					}
 				} catch (e) {
 					console.error('获取服务类型失败', e)
@@ -166,8 +153,26 @@
 			},
 			selectTab(index) {
 				this.currentTab = index;
+				const country = this.allCountries[index];
+				if (country) {
+					this.fetchServiceTypes({
+						countryId: country.id
+					})
+				}
 			},
 			selectService(index) {
+				// 如果点击已选中的服务，则取消选中并显示全部
+				if (this.currentService === index) {
+					this.currentService = -1;
+					const country = this.allCountries[this.currentTab];
+					if (country) {
+						this.fetchArticles({
+							countryId: country.id
+						})
+					}
+					return;
+				}
+
 				this.currentService = index;
 				const service = this.services[index];
 				// console.log('Selected service:', service)

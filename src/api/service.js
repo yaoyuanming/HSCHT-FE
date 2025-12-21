@@ -14,3 +14,13 @@ export const getServiceArticleList = (params) => {
 export const getServiceArticleDetail = (id) => {
   return request('get', `/services/article/${id}`)
 }
+
+// 获取指南列表
+export const getGuideList = (params) => {
+  return request('get', '/services/guide/list', params)
+}
+
+// 获取指南详情
+export const getGuideDetail = (id) => {
+  return request('get', `/services/guide/${id}`)
+}

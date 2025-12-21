@@ -2,16 +2,21 @@
 	<view class="container">
 		<!-- 顶部Banner -->
 		<view class="banner">
-			<image class="banner-img" :src="detail.articleImageUrl || '/static/Country/china.jpg'" mode="aspectFill"></image>
-			<view class="banner-overlay">
-				<text class="banner-title">{{ detail.articleName || '全球出海服务解决方案' }}</text>
+			<image class="banner-img" :src="detail.imageUrl || '/static/Country/china.jpg'" mode="widthFix"></image>
+			<view class="banner-overlay" v-if="type === 'service'">
+				<text class="banner-title">{{ detail.title || '全球出海服务解决方案' }}</text>
 			</view>
 		</view>
 
 		<!-- 内容区域 -->
 		<view class="content">
-			<!-- 价格展示 -->
-			<view class="price-block" v-if="detail.price">
+			<!-- 指南模式下的标题 -->
+			<view class="guide-title-box" v-if="type === 'guide'">
+				<text class="guide-main-title">{{ detail.title }}</text>
+			</view>
+
+			<!-- 价格展示 (仅服务) -->
+			<view class="price-block" v-if="type === 'service' && detail.price">
 				<text class="price-symbol">¥</text>
 				<text class="price-value">{{ detail.price }}</text>
 			</view>
@@ -22,28 +27,32 @@
 			<!-- 如果没有富文本内容，显示默认文本 -->
 			<block v-if="!detail.content">
 				<view class="text-block">
-					<text>{{ detail.articleIntro || '我们提供全方位的出海服务，帮助中国企业顺利进入全球市场，实现品牌国际化和业务增长。' }}</text>
+					<text>{{ detail.intro || '我们提供全方位的出海服务，帮助中国企业顺利进入全球市场，实现品牌国际化和业务增长。' }}</text>
 				</view>
 			</block>
 		</view>
 
-		<!-- 底部按钮 -->
-		<view class="footer">
+		<!-- 底部按钮 (仅服务) -->
+		<view class="footer" v-if="type === 'service'">
 			<button class="submit-btn" @click="consult">下单咨询</button>
 		</view>
 	</view>
 </template>
 
 <script>
-	import { getServiceArticleDetail } from '@/api/service.js'
+	import { getServiceArticleDetail, getGuideDetail } from '@/api/service.js'
 
 	export default {
 		data() {
 			return {
-				detail: {}
+				detail: {},
+				type: 'service' // service | guide
 			}
 		},
 		onLoad(options) {
+			if (options.type) {
+				this.type = options.type
+			}
 			if (options.id) {
 				this.getDetail(options.id)
 			}
@@ -54,19 +63,46 @@
 					uni.showLoading({
 						title: '加载中...'
 					})
-					const res = await getServiceArticleDetail(id)
+					let res = {}
+					if (this.type === 'guide') {
+						res = await getGuideDetail(id)
+					} else {
+						res = await getServiceArticleDetail(id)
+					}
+
 					if (res.code === 200) {
-						this.detail = res.data || {}
+						const data = res.data || {}
+						
+						// 数据标准化
+						if (this.type === 'guide') {
+							this.detail = {
+								...data,
+								title: data.guideName,
+								imageUrl: data.guideImageUrl,
+								content: data.content,
+								intro: ''
+							}
+							uni.setNavigationBarTitle({
+								title: '指南详情'
+							})
+						} else {
+							this.detail = {
+								...data,
+								title: data.articleName,
+								imageUrl: data.articleImageUrl,
+								content: data.content,
+								intro: data.articleIntro,
+								price: data.price
+							}
+							uni.setNavigationBarTitle({
+								title: this.detail.title || '服务详情'
+							})
+						}
 						
 						// 处理富文本图片宽度
 						if (this.detail.content) {
 							this.detail.content = this.detail.content.replace(/\<img/gi, '<img style="max-width:100%;height:auto;display:block;"')
 						}
-						
-						// 设置标题
-						uni.setNavigationBarTitle({
-							title: this.detail.articleName || '服务详情'
-						})
 					}
 				} catch (e) {
 					console.error('获取详情失败', e)
@@ -92,18 +128,17 @@
 	.container {
 		background-color: #ffffff;
 		min-height: 100vh;
-		padding-bottom: 120rpx; /* 为底部按钮留出空间 */
+		padding-bottom: 120rpx;
 	}
 
 	.banner {
 		width: 100%;
-		height: 400rpx;
 		position: relative;
 	}
 
 	.banner-img {
 		width: 100%;
-		height: 100%;
+		display: block; /* 消除图片底部间隙 */
 	}
 
 	.banner-overlay {
@@ -124,6 +159,17 @@
 
 	.content {
 		padding: 40rpx 30rpx;
+	}
+	
+	.guide-title-box {
+		margin-bottom: 30rpx;
+	}
+	
+	.guide-main-title {
+		font-size: 40rpx;
+		font-weight: bold;
+		color: #333333;
+		line-height: 1.4;
 	}
 	
 	.price-block {

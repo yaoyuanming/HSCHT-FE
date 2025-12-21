@@ -67,15 +67,14 @@
 	}
 
 	.country-grid {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: space-between;
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 20rpx;
 	}
 
 	.country-item {
-		width: 30%; /* 三列布局，留出间隙 */
+		width: 100%;
 		height: 200rpx;
-		margin-bottom: 20rpx;
 		overflow: hidden;
 		position: relative;
 		box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.1);
