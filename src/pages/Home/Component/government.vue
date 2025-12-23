@@ -74,7 +74,7 @@
 						title: '境外投资服务',
 						items: [{
 								name: '投资环境评估',
-								icon: 'globe-filled',
+								icon: 'pyq',
 								color: '#1e90ff'
 							},
 							{

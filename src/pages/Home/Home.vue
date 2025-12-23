@@ -26,7 +26,7 @@
 			<view class="action-btn consult-btn" @click="handleConsult">
 				<view class="btn-inner">
 					<!-- 图标占位 -->
-					<image class="btn-icon" src="/static/index/message.png" mode="aspectFit"></image>
+					<image class="btn-icon" src="/static/nav/service.png" mode="aspectFit"></image>
 					<text class="btn-text">我要咨询</text>
 				</view>
 			</view>
@@ -115,7 +115,7 @@
 
 	const handleConsult = () => {
 		uni.navigateTo({
-			url: '/pages/assistants/chat/index'
+			url: '/pages/Home/Component/consult'
 		})
 	}
 

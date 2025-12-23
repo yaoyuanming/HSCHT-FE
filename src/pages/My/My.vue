@@ -1,9 +1,15 @@
 <template>
 	<view class="container">
 		<!-- 顶部公司信息卡片 -->
-		<view class="company-card">
-			<view class="company-name">北京智慧城市科技有限公司</view>
-			<view class="company-id">企业ID: QY20230512001</view>
+		<view class="company-card" @click="handleLogin">
+			<view class="user-info-row">
+				<image class="avatar" :src="userAvatar" mode="aspectFill"></image>
+				<view class="info-content">
+					<view class="company-name">{{ userName }}</view>
+					<view class="company-id" v-if="userId">ID: {{ userId }}</view>
+					<view class="company-id" v-else>点击登录</view>
+				</view>
+			</view>
 		</view>
 
 		<!-- 功能入口网格 -->
@@ -43,13 +49,41 @@
 </template>
 
 <script>
+	import { mapGetters } from 'vuex'
+	import { completeLoginFlow } from '@/utils/auth'
+
 	export default {
 		data() {
 			return {
 
 			}
 		},
+		computed: {
+			...mapGetters(['userInfo', 'token']),
+			userName() {
+				if (!this.token) return '未登录'
+				return this.userInfo.user?.nickName || this.userInfo.nickName || '用户'
+			},
+			userId() {
+				if (!this.token) return ''
+				return this.userInfo.user?.userId || this.userInfo.userId || ''
+			},
+			userAvatar() {
+				return this.userInfo.user?.avatar || this.userInfo.avatar || '/static/logo.png' // 默认头像
+			}
+		},
 		methods: {
+			async handleLogin() {
+				// 无论是否有token，点击都尝试登录（可能是重新登录或token失效但未清理）
+				uni.showLoading({ title: '登录中...' })
+				const success = await completeLoginFlow()
+				uni.hideLoading()
+				if (success) {
+					uni.showToast({ title: '登录成功', icon: 'success' })
+				} else {
+					uni.showToast({ title: '登录失败', icon: 'none' })
+				}
+			},
 			onNavClick(type) {
 				console.log('Clicked navigation:', type);
 				// TODO: 跳转对应页面
@@ -78,13 +112,26 @@
 		margin-bottom: 30rpx;
 		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.03);
 	}
+	
+	.user-info-row {
+		display: flex;
+		align-items: center;
+	}
+	
+	.avatar {
+		width: 100rpx;
+		height: 100rpx;
+		border-radius: 50%;
+		margin-right: 20rpx;
+		background-color: #eee;
+	}
 
 	/* 公司信息卡片 */
 	.company-name {
 		font-size: 34rpx;
 		font-weight: bold;
 		color: #333333;
-		margin-bottom: 16rpx;
+		margin-bottom: 10rpx;
 	}
 
 	.company-id {
@@ -98,24 +145,18 @@
 		justify-content: space-between;
 		margin-bottom: 30rpx;
 	}
-
+	
 	.grid-item {
-		flex: 1;
-		background-color: #ffffff;
-		border-radius: 24rpx;
-		padding: 40rpx 0;
-		margin-right: 20rpx;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: center;
-		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.03);
+		background-color: #fff;
+		padding: 30rpx;
+		border-radius: 16rpx;
+		width: 30%;
+		box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.02);
 	}
-
-	.grid-item:last-child {
-		margin-right: 0;
-	}
-
+	
 	.icon-wrapper {
 		width: 80rpx;
 		height: 80rpx;
@@ -123,28 +164,20 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		margin-bottom: 20rpx;
+		margin-bottom: 16rpx;
+		
+		&.blue-bg { background-color: #e6f7ff; }
+		&.green-bg { background-color: #f6ffed; }
+		&.orange-bg { background-color: #fff7e6; }
 	}
-
-	.blue-bg {
-		background-color: #e6f1ff;
-	}
-
-	.green-bg {
-		background-color: #e6ffef;
-	}
-
-	.orange-bg {
-		background-color: #fff7e6;
-	}
-
+	
 	.icon {
 		font-size: 40rpx;
 	}
-
+	
 	.grid-text {
 		font-size: 26rpx;
-		color: #666666;
+		color: #333;
 	}
 
 	/* 余额卡片 */
@@ -152,26 +185,25 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-bottom: 30rpx;
+		margin-bottom: 20rpx;
 	}
-
+	
 	.balance-label {
-		font-size: 30rpx;
-		color: #666666;
+		font-size: 28rpx;
+		color: #666;
 	}
-
+	
 	.recharge-btn {
-		background-color: #e6f1ff;
 		padding: 8rpx 24rpx;
+		background-color: #2979ff;
+		color: #fff;
 		border-radius: 30rpx;
-		color: #007aff;
 		font-size: 24rpx;
-		font-weight: bold;
 	}
-
+	
 	.balance-amount {
 		font-size: 48rpx;
 		font-weight: bold;
-		color: #333333;
+		color: #333;
 	}
 </style>
