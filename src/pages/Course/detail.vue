@@ -30,7 +30,7 @@
 							</view>
 							<view class="top-card-right">
 								<text class="top-card-people">
-									人数：--
+									人数：{{ course.participants || 0 }}
 								</text>
 							</view>
 						</view>

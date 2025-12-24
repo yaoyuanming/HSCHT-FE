@@ -41,7 +41,7 @@
 							</view>
 							
 							<view class="info-right">
-								<text class="course-count">课程人数: {{ participantsLabel(course) }}</text>
+								<text class="course-count">活动人数: {{ course.participants || 0 }}</text>
 								
 								<button class="enroll-btn" @click.stop="goDetail(course.id)">
 									{{ course.enrolled ? '已报名' : '报名' }}
@@ -88,13 +88,6 @@
 	const courseTypeText = (type) => {
 		const t = Number(type)
 		return t === 0 ? '线下' : (t === 1 ? '线上' : '内测')
-	}
-
-	const participantsLabel = (course) => {
-		if (course.maxParticipants) {
-			return `${course.enrolledParticipants || 0}/${course.maxParticipants}`
-		}
-		return course.enrolledParticipants || 0
 	}
 
 	const priceLabel = (course) => {
