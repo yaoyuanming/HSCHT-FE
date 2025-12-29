@@ -38,7 +38,7 @@
 </template>
 
 <script>
-	import { getTicketList } from '@/api/ticket.js'
+	import { getTicketList, getTicketActivityLogList } from '@/api/ticket.js'
 
 	export default {
 		data() {
@@ -56,21 +56,57 @@
 					// 传入 isQuerySelf: true 只查询当前用户的工单
 					const res = await getTicketList({ isQuerySelf: true })
 					const list = res.data?.rows || res.rows || res.data || []
-					this.orderList = list.map(item => ({
+					
+					// 初步映射
+					const tempList = list.map(item => ({
 						id: item.id,
 						orderNo: item.ticketNo,
 						status: this.mapStatus(item.status),
 						statusText: this.mapStatusText(item.status),
 						description: item.description,
 						createTime: item.createTime,
-						assignee: item.assignUser?.nickName || item.assignUserId || '未分配' // 假设后端返回assignUser对象或ID
+						assignee: item.assignUser?.nickName || item.assignUser?.userName || item.assignUserName || item.assignUserId || '未分配'
 					}))
+					
+					this.orderList = tempList
+					
+					// 异步修复处理人名称 (N+1 问题修复方案)
+					// 由于列表接口未返回处理人名称，仅返回ID，需通过查询日志获取
+					this.fixAssigneeNames(tempList)
+					
 				} catch (e) {
 					console.error('Fetch ticket list failed:', e)
 					uni.showToast({ title: '加载失败', icon: 'none' })
 				} finally {
 					uni.hideLoading()
 				}
+			},
+			async fixAssigneeNames(list) {
+				const promises = list.map(async (item, index) => {
+					// 如果 assignee 是长数字ID（10位以上）或者是 '未分配' 但状态不是待处理
+					const isId = /^\d{10,}$/.test(item.assignee)
+					if (isId || (item.assignee === '未分配' && item.status !== 'pending')) {
+						try {
+							const logRes = await getTicketActivityLogList(item.id)
+							const logs = logRes.data?.rows || logRes.rows || logRes.data || []
+							
+							// 找最后一条分配记录 (activityType === 1)
+							// 假设 logs 是按时间正序
+							const allocationLog = [...logs].reverse().find(log => Number(log.activityType) === 1)
+							
+							if (allocationLog && allocationLog.description) {
+								// 直接更新 this.orderList 中的对应项
+								// 注意：这里利用了 Vue 的响应式，但最好使用 $set 或者重新赋值
+								// uni-app (Vue2) 中修改数组索引需要注意，但修改对象属性是响应式的
+								this.orderList[index].assignee = allocationLog.description
+							}
+						} catch (e) {
+							console.error(`Fetch logs for ticket ${item.orderNo} failed`, e)
+						}
+					}
+				})
+				
+				await Promise.all(promises)
 			},
 			mapStatus(status) {
 				const map = {
