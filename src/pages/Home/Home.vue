@@ -40,7 +40,7 @@
 					<view class="icon-wrapper bg-blue-light">
 						<uni-icons type="vip-filled" size="28" color="#ffffff"></uni-icons>
 					</view>
-					<text class="card-title">政务服务</text>
+					<text class="card-title">出海分析</text>
 					<text class="card-desc">便捷办理出海相关{{"\n"}}政务手续</text>
 				</view>
 			</view>
