@@ -9,3 +9,8 @@ export const createReport = (data) => {
 export const getReportList = (params) => {
 	return request('get', '/services/report/list', params)
 }
+
+// 根据ID获取OSS资源列表
+export const getOssListByIds = (ossIds) => {
+	return request('get', `/resource/oss/listByIds/${ossIds}`)
+}

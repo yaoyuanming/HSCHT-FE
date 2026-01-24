@@ -1,7 +1,8 @@
 <template>
 	<view class="container">
 		<image 
-			src="https://ts1.tc.mm.bing.net/th/id/R-C.a527b360fe317d1ed2d80a49d51c9c1c?rik=SQr3Q9XFQzrf0A&riu=http%3a%2f%2fseopic.699pic.com%2fphoto%2f50075%2f6521.jpg_wh1200.jpg&ehk=7cbm1dF83MThf5g4EdvNfSIBgLkHs0931e6bQnc7sug%3d&risl=&pid=ImgRaw&r=0" 
+			v-if="imageUrl"
+			:src="imageUrl" 
 			mode="widthFix" 
 			class="report-image"
 		></image>
@@ -9,14 +10,30 @@
 </template>
 
 <script>
+	import { getOssListByIds } from '@/api/analysis/index.js'
+
 	export default {
 		data() {
 			return {
-				
+				imageUrl: ''
 			}
 		},
+		onLoad() {
+			this.fetchReportImage()
+		},
 		methods: {
-			
+			async fetchReportImage() {
+				try {
+					const res = await getOssListByIds('2014729556263051265')
+					if (res.code === 200 && res.data && res.data.length > 0) {
+						// 假设返回的数据是对象列表，取第一个对象的url字段，具体根据实际返回结构调整
+						// 这里先假设直接返回了包含url的对象列表
+						this.imageUrl = res.data[0].url
+					}
+				} catch (e) {
+					console.error('获取报告图片失败', e)
+				}
+			}
 		}
 	}
 </script>
