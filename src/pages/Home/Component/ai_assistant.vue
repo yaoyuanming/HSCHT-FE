@@ -36,12 +36,16 @@
 							<view class="dot"></view>
 							<view class="dot"></view>
 						</view>
-						<text 
-							v-else 
-							class="message-text" 
-							:class="msg.role === 'user' ? 'user-text' : ''" 
-							user-select
-						>{{ msg.content }}</text>
+						<view v-else class="content-wrapper">
+							<text 
+								v-if="msg.role === 'user'" 
+								class="message-text user-text" 
+								user-select
+							>{{ msg.content }}</text>
+							<view v-else class="markdown-content">
+								<up-parse :content="parseMarkdown(msg.content)" :tagStyle="markdownTagStyle"></up-parse>
+							</view>
+						</view>
 						
 						<!-- 重新生成按钮 (仅针对最后一条助手消息且非流式传输中) -->
 						<view 
@@ -107,12 +111,14 @@
 	import {
 		ref,
 		nextTick,
-		onUnmounted
+		onUnmounted,
+		computed
 	} from 'vue';
 	import {
 		onLoad
 	} from '@dcloudio/uni-app';
 	import UniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue';
+	import MarkdownIt from 'markdown-it';
 	import { 
 		createSession 
 	} from '@/api/ai/session.js';
@@ -129,6 +135,19 @@
 	const isStreaming = ref(false);
 	const isResponseComplete = ref(false);
 
+	const markdownTagStyle = {
+		p: 'margin-bottom: 10px; line-height: 1.6;',
+		h1: 'margin-bottom: 10px; font-weight: bold; font-size: 1.5em;',
+		h2: 'margin-bottom: 10px; font-weight: bold; font-size: 1.3em;',
+		h3: 'margin-bottom: 10px; font-weight: bold; font-size: 1.1em;',
+		ul: 'margin-bottom: 10px; padding-left: 20px;',
+		ol: 'margin-bottom: 10px; padding-left: 20px;',
+		li: 'margin-bottom: 5px;',
+		blockquote: 'margin-bottom: 10px; padding: 10px; background-color: #f0f0f0; border-left: 4px solid #ccc; color: #666;',
+		pre: 'margin-bottom: 10px; padding: 10px; background-color: #f6f8fa; border-radius: 4px; overflow-x: auto;',
+		code: 'font-family: monospace; background-color: #f6f8fa; padding: 2px 4px; border-radius: 4px;'
+	};
+
 	const queryOptions = ref({});
 	const sessionId = ref('');
 	const currentTask = ref(null); // 当前请求任务
@@ -144,6 +163,18 @@
 	const typingQueue = ref([]);
 	const isTyping = ref(false);
 	let typingTimer = null;
+
+	const md = new MarkdownIt({
+		html: true,
+		breaks: true,
+		linkify: true
+	});
+
+	// 解析Markdown内容
+	const parseMarkdown = (content) => {
+		if (!content) return '';
+		return md.render(content);
+	};
 
 	const checkAndUnlock = () => {
 		if (isResponseComplete.value && typingQueue.value.length === 0) {
@@ -817,6 +848,17 @@
 		&.user-bubble {
 			background: #1890ff;
 			box-shadow: 0 4rpx 12rpx rgba(24, 144, 255, 0.2);
+		}
+		
+		.content-wrapper {
+			width: 100%;
+		}
+		
+		.markdown-content {
+			width: 100%;
+			overflow-x: hidden;
+			font-size: 28rpx;
+			line-height: 1.6;
 		}
 	}
 	

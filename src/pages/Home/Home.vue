@@ -23,25 +23,40 @@
 			<!-- 功能卡片区 (2列) -->
 			<view class="function-grid">
 				<!-- 我要咨询 -->
-				<view class="func-card" @click="handleConsult">
-					<!-- 装饰背景圆 -->
-					<view class="card-decor decor-green"></view>
-					<view class="icon-wrapper bg-green-light">
-						<uni-icons type="chatboxes" size="28" color="#ffffff"></uni-icons>
-					</view>
-					<text class="card-title">我要咨询</text>
-					<text class="card-desc">专业顾问在线解答{{"\n"}}出海疑问</text>
+			<view class="func-card" @click="handleConsult">
+				<!-- 装饰背景圆 -->
+				<view class="card-decor decor-green"></view>
+				<view class="icon-wrapper bg-green-light">
+					<image src="/static/index/2.png" mode="aspectFit" style="width: 50rpx; height: 50rpx;"></image>
 				</view>
+				<text class="card-title">我要咨询</text>
+				<text class="card-desc">专业顾问在线解答{{"\n"}}出海疑问</text>
+			</view>
 
-				<!-- 政务服务 -->
-				<view class="func-card" @click="handleGov">
-					<!-- 装饰背景圆 -->
-					<view class="card-decor decor-blue"></view>
-					<view class="icon-wrapper bg-blue-light">
-						<uni-icons type="vip-filled" size="28" color="#ffffff"></uni-icons>
-					</view>
-					<text class="card-title">出海分析</text>
-					<text class="card-desc">便捷办理出海相关{{"\n"}}政务手续</text>
+			<!-- 出海分析 -->
+			<view class="func-card" @click="handleAnalysis">
+				<!-- 装饰背景圆 -->
+				<view class="card-decor decor-blue"></view>
+				<view class="icon-wrapper bg-blue-light">
+					<image src="/static/index/3.png" mode="aspectFit" style="width: 45rpx; height: 45rpx;"></image>
+				</view>
+				<text class="card-title">出海分析</text>
+				<text class="card-desc">专业AI专家生成{{"\n"}}出海报告</text>
+			</view>
+			</view>
+
+			<!-- 政务服务 (Moved from above) -->
+			<view class="section-header">
+				<view class="header-left">
+					<image src="/static/index/1.png" style="width: 32rpx; height: 32rpx; margin-right: 12rpx;" mode="aspectFit"></image>
+					<text class="header-title" style="margin-left: 0;">政务服务</text>
+				</view>
+			</view>
+
+			<view class="gov-action-card" @click="handleGov">
+				<view class="gov-btn-content">
+					<image src="/static/index/2.png" style="width: 42rpx; height: 42rpx;" mode="aspectFit"></image>
+					<text class="gov-btn-text">政策服务咨询</text>
 				</view>
 			</view>
 
@@ -216,6 +231,12 @@
 	const handleConsult = () => {
 		uni.navigateTo({
 			url: '/pages/Home/Component/ai_assistant'
+		})
+	}
+
+	const handleAnalysis = () => {
+		uni.navigateTo({
+			url: '/pages/Home/Analysis/chuhai'
 		})
 	}
 
@@ -429,6 +450,35 @@
 		font-weight: bold;
 		color: #333333;
 		margin-left: 12rpx;
+	}
+
+	/* Government Service Action */
+	.gov-action-card {
+		background-color: #1890ff;
+		border-radius: 16rpx;
+		padding: 30rpx;
+		margin-bottom: 40rpx;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		box-shadow: 0 4rpx 16rpx rgba(24, 144, 255, 0.2);
+	}
+
+	.gov-action-card:active {
+		opacity: 0.9;
+	}
+
+	.gov-btn-content {
+		display: flex;
+		align-items: center;
+		gap: 16rpx;
+	}
+
+	.gov-btn-text {
+	    margin-left: 6rpx;
+		font-size: 32rpx;
+		color: #ffffff;
+		font-weight: bold;
 	}
 
 	/* Country Grid */
