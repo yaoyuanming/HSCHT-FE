@@ -136,16 +136,22 @@
 	const isResponseComplete = ref(false);
 
 	const markdownTagStyle = {
-		p: 'margin-bottom: 10px; line-height: 1.6;',
-		h1: 'margin-bottom: 10px; font-weight: bold; font-size: 1.5em;',
-		h2: 'margin-bottom: 10px; font-weight: bold; font-size: 1.3em;',
-		h3: 'margin-bottom: 10px; font-weight: bold; font-size: 1.1em;',
-		ul: 'margin-bottom: 10px; padding-left: 20px;',
-		ol: 'margin-bottom: 10px; padding-left: 20px;',
-		li: 'margin-bottom: 5px;',
-		blockquote: 'margin-bottom: 10px; padding: 10px; background-color: #f0f0f0; border-left: 4px solid #ccc; color: #666;',
-		pre: 'margin-bottom: 10px; padding: 10px; background-color: #f6f8fa; border-radius: 4px; overflow-x: auto;',
-		code: 'font-family: monospace; background-color: #f6f8fa; padding: 2px 4px; border-radius: 4px;'
+		p: 'margin-bottom: 10px; line-height: 1.6; font-size: 28rpx;',
+		h1: 'margin: 20px 0 10px; font-weight: bold; font-size: 36rpx; line-height: 1.4;',
+		h2: 'margin: 16px 0 10px; font-weight: bold; font-size: 32rpx; line-height: 1.4;',
+		h3: 'margin: 12px 0 8px; font-weight: bold; font-size: 30rpx; line-height: 1.4;',
+		h4: 'margin: 10px 0 8px; font-weight: bold; font-size: 28rpx;',
+		ul: 'margin-bottom: 10px; padding-left: 15px;',
+		ol: 'margin-bottom: 10px; padding-left: 15px;',
+		li: 'margin-bottom: 5px; line-height: 1.6;',
+		blockquote: 'margin: 10px 0; padding: 10px; background-color: #f0f0f0; border-left: 4px solid #ccc; color: #666; font-size: 26rpx;',
+		pre: 'margin: 10px 0; padding: 10px; background-color: #f6f8fa; border-radius: 4px; overflow-x: auto; font-size: 24rpx;',
+		code: 'font-family: monospace; background-color: #f6f8fa; padding: 2px 4px; border-radius: 4px; color: #d63384;',
+		hr: 'margin: 15px 0; border: 0; border-top: 1px solid #eee;',
+		strong: 'font-weight: bold; color: #333;',
+		table: 'width: 100%; border-collapse: collapse; margin-bottom: 10px;',
+		th: 'padding: 8px; border: 1px solid #ddd; background-color: #f6f8fa; font-weight: bold;',
+		td: 'padding: 8px; border: 1px solid #ddd;'
 	};
 
 	const queryOptions = ref({});
@@ -170,10 +176,222 @@
 		linkify: true
 	});
 
+	const splitTableTitleIfNeeded = (line) => {
+		if (!line) return { title: '', row: '' };
+		if (line.trimStart().startsWith('|')) return { title: '', row: line };
+		const firstPipeIndex = line.indexOf('|');
+		if (firstPipeIndex <= 0) return { title: '', row: line };
+		const title = line.slice(0, firstPipeIndex).trim();
+		const row = line.slice(firstPipeIndex);
+		if (!title) return { title: '', row: line };
+		if (title.length < 4) return { title: '', row: line };
+		if (!/(表[:：]?|一览表|汇总表|对照表)$/.test(title)) return { title: '', row: line };
+		return { title, row };
+	};
+
+	const parseTableCells = (row) => {
+		const trimmed = row.trim();
+		const withoutLeading = trimmed.replace(/^\|/, '');
+		const withoutTrailing = withoutLeading.replace(/\|$/, '');
+		return withoutTrailing.split('|').map((c) => c.trim());
+	};
+
+	const isSeparatorRow = (row) => {
+		const cells = parseTableCells(row);
+		if (cells.length < 2) return false;
+		return cells.every((c) => /^:?-{3,}:?$/.test(c));
+	};
+
+	const normalizeTableRowText = (row) => {
+		let r = row.replace(/^\|\|+/, '|').trimRight();
+		if (!r.trimStart().startsWith('|')) r = `| ${r.trim()}`;
+		if (!/\|\s*$/.test(r)) r = `${r} |`;
+		return r;
+	};
+
+	const buildTableRow = (cells, colCount) => {
+		const normalized = cells.slice(0, colCount);
+		while (normalized.length < colCount) normalized.push('');
+		return `| ${normalized.join(' | ')} |`;
+	};
+
+	const buildSeparatorRow = (colCount) => {
+		return `| ${Array.from({ length: colCount }).map(() => '---').join(' | ')} |`;
+	};
+
+	const normalizeTableBlock = (blockLines) => {
+		const nonEmpty = blockLines.filter((l) => l.trim() !== '');
+		const titleLines = [];
+		const rawRows = [];
+
+		for (const line of nonEmpty) {
+			if (!line.includes('|')) continue;
+			const { title, row } = splitTableTitleIfNeeded(line);
+			if (title) titleLines.push(title);
+			rawRows.push(row);
+		}
+
+		const cleanedRows = rawRows
+			.map((r) => normalizeTableRowText(r))
+			.filter((r) => {
+				const cells = parseTableCells(r);
+				if (cells.length < 2) return false;
+				const joined = cells.join('').trim();
+				if (!joined) return false;
+				if (joined === '-') return false;
+				return true;
+			});
+
+		if (cleanedRows.length < 2) {
+			const fallback = [];
+			for (const t of titleLines) fallback.push(t);
+			for (const l of nonEmpty) fallback.push(`- ${l.trim()}`);
+			return fallback;
+		}
+
+		let headerRow = cleanedRows[0];
+		let separatorRow = cleanedRows[1];
+		let dataRows = cleanedRows.slice(2);
+
+		const headerCells = parseTableCells(headerRow);
+		let colCount = headerCells.length;
+		if (colCount < 2) colCount = 2;
+
+		if (!isSeparatorRow(separatorRow)) {
+			dataRows = cleanedRows.slice(1);
+			separatorRow = buildSeparatorRow(colCount);
+		} else {
+			const sepCells = parseTableCells(separatorRow);
+			if (sepCells.length !== colCount) {
+				separatorRow = buildSeparatorRow(colCount);
+			}
+		}
+
+		const normalizedHeader = buildTableRow(parseTableCells(headerRow), colCount);
+		const normalizedData = dataRows.map((r) => buildTableRow(parseTableCells(r), colCount));
+
+		const result = [];
+		for (const t of titleLines) result.push(t);
+		result.push(normalizedHeader);
+		result.push(separatorRow);
+		for (const r of normalizedData) result.push(r);
+
+		if (normalizedData.length === 0) {
+			result.push(buildTableRow(Array.from({ length: colCount }).map(() => ''), colCount));
+		}
+
+		return result;
+	};
+
+	const normalizeNonTableLine = (line) => {
+		if (line.trim() === '') return [''];
+		let l = line;
+
+		l = l.replace(/^(\s*#{1,6})(\S)/, '$1 $2');
+		l = l.replace(/^(\s*[-*])(\S)/, '$1 $2');
+		l = l.replace(/^(\s*\d+\.)(\S)/, '$1 $2');
+		l = l.replace(/^(\s*>)(\S)/, '$1 $2');
+
+		const hrMatch = l.match(/^(.*?)(-{3,})\s*$/);
+		if (hrMatch) {
+			const before = hrMatch[1].trimEnd();
+			if (before && !before.includes('|')) return [before, '', '---'];
+		}
+
+		const hashIndex = l.search(/#{2,6}/);
+		if (hashIndex > 0) {
+			const before = l.slice(0, hashIndex).trimEnd();
+			const after = l.slice(hashIndex);
+			const m = after.match(/^(#{2,6})\s*(.*)$/);
+			if (m) {
+				const hashes = m[1];
+				const title = (m[2] || '').trim();
+				if (before && title) return [before, '', `${hashes} ${title}`];
+			}
+		}
+
+		return [l];
+	};
+
+	const countPipes = (line) => {
+		let count = 0;
+		for (let i = 0; i < line.length; i++) {
+			if (line[i] === '|') count++;
+		}
+		return count;
+	};
+
+	const looksTableishLine = (line) => {
+		if (!line) return false;
+		const trimmed = line.trim();
+		if (trimmed === '') return false;
+		if (trimmed.startsWith('```')) return false;
+		return countPipes(line) >= 2;
+	};
+
+	const normalizeAiMarkdown = (content) => {
+		const text = String(content).replace(/\r\n?/g, '\n');
+		const lines = text.split('\n');
+		const out = [];
+		let inFence = false;
+
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
+			const isFence = /^\s*```/.test(line);
+			if (isFence) {
+				inFence = !inFence;
+				out.push(line);
+				continue;
+			}
+
+			if (inFence) {
+				out.push(line);
+				continue;
+			}
+
+			if (looksTableishLine(line)) {
+				let hasNext = false;
+				for (let k = i + 1; k < Math.min(lines.length, i + 8); k++) {
+					const nextLine = lines[k];
+					if (/^\s*```/.test(nextLine)) break;
+					if (nextLine.trim() === '') continue;
+					hasNext = looksTableishLine(nextLine);
+					break;
+				}
+
+				if (hasNext) {
+					const block = [];
+					let j = i;
+					for (; j < lines.length; j++) {
+						const l = lines[j];
+						if (/^\s*```/.test(l)) break;
+						if (l.trim() === '' || looksTableishLine(l)) {
+							block.push(l);
+							continue;
+						}
+						break;
+					}
+
+					out.push(...normalizeTableBlock(block));
+					i = j - 1;
+					continue;
+				}
+			}
+
+			out.push(...normalizeNonTableLine(line));
+		}
+
+		return out.join('\n').replace(/\n{3,}/g, '\n\n');
+	};
+
 	// 解析Markdown内容
 	const parseMarkdown = (content) => {
 		if (!content) return '';
-		return md.render(content);
+		
+		const processed = normalizeAiMarkdown(content);
+
+		// 渲染为HTML
+		return md.render(processed);
 	};
 
 	const checkAndUnlock = () => {
