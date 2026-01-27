@@ -222,8 +222,21 @@
 				}
 			},
 			goToDetail(item) {
+				const id = item && (item.id || item.articleId);
+				if (!id) {
+					uni.showToast({
+						title: '未找到文章ID',
+						icon: 'none'
+					});
+					return;
+				}
+				const selectedService = this.currentService >= 0 ? this.services[this.currentService] : null
+				const serviceTypeId = (item && (item.servicesTypeId || item.serviceTypeId || item.typeId || item.services_type_id)) ||
+					(selectedService && (selectedService.serviceTypeId || selectedService.id || selectedService.typeId)) || ''
+				const serviceTypeName = (item && (item.serviceTypeName || item.servicesTypeName || item.typeName || item.services_type_name)) ||
+					(selectedService && (selectedService.typeName || selectedService.serviceTypeName)) || ''
 				uni.navigateTo({
-					url: `/pages/Home/Component/consult?service=${item.articleName}&category=1`
+					url: `/pages/Service/funtion/detail?id=${encodeURIComponent(id)}&type=service&servicesTypeId=${encodeURIComponent(serviceTypeId)}&serviceTypeName=${encodeURIComponent(serviceTypeName)}`
 				});
 			}
 		}

@@ -130,6 +130,7 @@
 		ref,
 		onMounted
 	} from 'vue'
+	import { onShow } from '@dcloudio/uni-app'
 	import {
 		getCountryList
 	} from '@/api/country.js'
@@ -172,9 +173,10 @@
 	const fetchCountryList = async () => {
 		try {
 			const res = await getCountryList()
+			if (!res || (res.code !== 200 && res.code !== 0)) return
 			// 兼容不同的返回结构
 			const dataList = res.data?.rows || res.rows || res.data || []
-			if (dataList) {
+			if (Array.isArray(dataList)) {
 				const baseUrl = import.meta.env.VITE_API_BASE_URL || ''
 				allCountries.value = dataList.map(item => ({
 					...item,
@@ -193,9 +195,10 @@
 			const res = await getActivityList({
 				status: '1'
 			})
+			if (!res || (res.code !== 200 && res.code !== 0)) return
 			// 假设返回结构类似
 			const dataList = res.rows || res.data?.rows || res.data || []
-			if (dataList) {
+			if (Array.isArray(dataList)) {
 				activities.value = dataList.map(item => ({
 					...item,
 					activityTimeStart: item.activityTimeStart ? item.activityTimeStart.substring(0, 10) : ''
@@ -269,9 +272,17 @@
 		popup.value.close()
 	}
 
-	onMounted(() => {
+	const refreshHomeData = () => {
 		fetchCountryList()
 		fetchActivityList()
+	}
+
+	onMounted(() => {
+		refreshHomeData()
+	})
+
+	onShow(() => {
+		refreshHomeData()
 	})
 </script>
 

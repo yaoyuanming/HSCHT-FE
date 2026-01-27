@@ -85,6 +85,8 @@
 					phone: ''
 				},
 				serviceName: '',
+				serviceTypeId: '',
+				serviceTypeName: '',
 				category: 0, // 0:咨询工单, 1:服务工单
 				pageTitle: '我要咨询'
 			}
@@ -101,11 +103,29 @@
 			}
 
 			if (options.service) {
-				this.serviceName = options.service;
+				const rawService = options.service;
+				try {
+					this.serviceName = decodeURIComponent(rawService);
+				} catch (e) {
+					this.serviceName = rawService;
+				}
 				// 用户要求不再自动填充咨询内容，留空让用户自己输入
 				// if (this.category === 1) {
 				// 	this.formData.intention = `我对【${options.service}】很感兴趣，想了解更多详情。`;
 				// }
+			}
+			
+			const serviceTypeIdOption = options.servicesTypeId || options.serviceTypeId || options.typeId || options.services_type_id
+			if (serviceTypeIdOption !== undefined && serviceTypeIdOption !== null && String(serviceTypeIdOption) !== '') {
+				this.serviceTypeId = String(serviceTypeIdOption)
+			}
+			if (options.serviceTypeName) {
+				const rawServiceTypeName = options.serviceTypeName
+				try {
+					this.serviceTypeName = decodeURIComponent(rawServiceTypeName)
+				} catch (e) {
+					this.serviceTypeName = rawServiceTypeName
+				}
 			}
 		},
 		methods: {
@@ -144,6 +164,16 @@
 						category: this.category, // 使用动态分类
 						status: 0, // 0:待处理
 						assignTenantId: utilsConfig.tenantId // 传递租户ID
+					}
+					if (this.category === 1) {
+						const service = this.serviceTypeName || this.serviceName || ''
+						if (service) params.service = service
+						if (this.serviceTypeId !== undefined && this.serviceTypeId !== null && String(this.serviceTypeId) !== '') {
+							const rawId = String(this.serviceTypeId)
+							const shouldCastToNumber = /^\d+$/.test(rawId) && rawId.length <= 15
+							params.servicesTypeId = shouldCastToNumber ? Number(rawId) : rawId
+						}
+						if (this.serviceTypeName) params.serviceTypeName = this.serviceTypeName
 					}
 					
 					await submitTicket(params)
