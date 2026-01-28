@@ -21,7 +21,7 @@
 			:scroll-top="scrollTop"
 			:scroll-into-view="scrollIntoView"
 			:scroll-with-animation="false"
-			:style="{ top: (statusBarHeight + 44) + 'px' }"
+			:style="{ top: (statusBarHeight + 44) + 'px', bottom: chatBottomOffset + 'px' }"
 		>
 			<view class="chat-padding">
 				<view class="ai-notice">回答由AI生成，仅供参考</view>
@@ -65,8 +65,7 @@
 					</view>
 				</view>
 				
-				<!-- 垫高底部，防止被固定区域遮挡 -->
-				<view style="height: 180rpx;"></view>
+				<view style="height: 8px;"></view>
 				<view id="chat-bottom-anchor" style="height: 1px;"></view>
 			</view>
 		</scroll-view>
@@ -114,7 +113,8 @@
 		ref,
 		nextTick,
 		onUnmounted,
-		computed
+		computed,
+		getCurrentInstance
 	} from 'vue';
 	import {
 		onLoad,
@@ -138,6 +138,8 @@
 	const scrollIntoView = ref('');
 	const isStreaming = ref(false);
 	const isResponseComplete = ref(false);
+	const fixedBottomHeight = ref(0);
+	const chatBottomOffset = computed(() => Math.max(0, fixedBottomHeight.value - 24));
 
 	const markdownTagStyle = {
 		p: 'margin-bottom: 10px; line-height: 1.6; font-size: 28rpx;',
@@ -173,6 +175,19 @@
 	const typingQueue = ref([]);
 	const isTyping = ref(false);
 	let typingTimer = null;
+	
+	const instance = getCurrentInstance();
+	
+	const updateFixedBottomHeight = () => {
+		nextTick(() => {
+			const query = uni.createSelectorQuery().in(instance);
+			query.select('.fixed-bottom').boundingClientRect((rect) => {
+				if (!rect) return;
+				const h = Number(rect.height) || 0;
+				if (h > 0) fixedBottomHeight.value = h;
+			}).exec();
+		});
+	};
 
 	const md = new MarkdownIt({
 		html: true,
@@ -483,9 +498,11 @@
 		queryOptions.value = options || {};
 		
 		initializeChat();
+		updateFixedBottomHeight();
 	});
 
 	onShow(() => {
+		updateFixedBottomHeight();
 		scrollToBottom();
 	});
 	
@@ -521,6 +538,7 @@
 	
 	const scrollToBottom = () => {
 		nextTick(() => {
+			updateFixedBottomHeight();
 			scrollIntoView.value = '';
 			scrollTop.value = scrollTop.value + 10000;
 			setTimeout(() => {
@@ -1009,12 +1027,10 @@
 	}
 
 	.chat-content {
-		position: absolute;
+		position: fixed;
 		left: 0;
 		right: 0;
-		bottom: 0; 
 		width: 100%;
-		height: 100%;
 	}
 	
 	.chat-padding {

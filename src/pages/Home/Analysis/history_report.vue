@@ -41,6 +41,12 @@
 
 <script>
 	import { createReport, getReportList } from '../../../api/analysis/index.js'
+	import dayjs from 'dayjs'
+	import utc from 'dayjs/plugin/utc'
+	import timezone from 'dayjs/plugin/timezone'
+	
+	dayjs.extend(utc)
+	dayjs.extend(timezone)
 	
 	export default {
 		data() {
@@ -56,6 +62,15 @@
 			this.fetchReportList({ showLoading: false, fromPullDown: true })
 		},
 		methods: {
+			formatToEast8(value) {
+				if (value === undefined || value === null || value === '') return ''
+				const raw = String(value).trim()
+				if (!raw) return ''
+				const hasZone = /z$|[+-]\d{2}:\d{2}$/.test(raw) || raw.includes('T')
+				const d = hasZone ? dayjs(raw) : dayjs.utc(raw)
+				if (!d.isValid()) return raw
+				return d.tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss')
+			},
 			parseParameters(value) {
 				if (!value) return {}
 				if (typeof value === 'object') return value
@@ -149,7 +164,7 @@
 							id: row.id,
 							title: row.reportName,
 							reportName: row.reportName,
-							time: row.createTime,
+							time: this.formatToEast8(row.createTime),
 							status: row.status,
 							pdfFilePathStr: row.pdfFilePathStr,
 							parameters: row.parameters,
