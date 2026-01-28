@@ -19,6 +19,7 @@
 			class="chat-content" 
 			scroll-y 
 			:scroll-top="scrollTop"
+			:scroll-into-view="scrollIntoView"
 			:scroll-with-animation="false"
 			:style="{ top: (statusBarHeight + 44) + 'px' }"
 		>
@@ -66,6 +67,7 @@
 				
 				<!-- 垫高底部，防止被固定区域遮挡 -->
 				<view style="height: 180rpx;"></view>
+				<view id="chat-bottom-anchor" style="height: 1px;"></view>
 			</view>
 		</scroll-view>
 
@@ -115,7 +117,8 @@
 		computed
 	} from 'vue';
 	import {
-		onLoad
+		onLoad,
+		onShow
 	} from '@dcloudio/uni-app';
 	import UniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue';
 	import MarkdownIt from 'markdown-it';
@@ -132,6 +135,7 @@
 	const inputText = ref('');
 	const messages = ref([]);
 	const scrollTop = ref(0);
+	const scrollIntoView = ref('');
 	const isStreaming = ref(false);
 	const isResponseComplete = ref(false);
 
@@ -480,6 +484,10 @@
 		
 		initializeChat();
 	});
+
+	onShow(() => {
+		scrollToBottom();
+	});
 	
 	onUnmounted(() => {
 		stopCurrentTask();
@@ -512,9 +520,17 @@
 	};
 	
 	const scrollToBottom = () => {
-		// 使用 nextTick 确保视图更新后再滚动
 		nextTick(() => {
+			scrollIntoView.value = '';
 			scrollTop.value = scrollTop.value + 10000;
+			setTimeout(() => {
+				scrollIntoView.value = 'chat-bottom-anchor';
+				scrollTop.value = scrollTop.value + 10000;
+			}, 16);
+			setTimeout(() => {
+				scrollIntoView.value = 'chat-bottom-anchor';
+				scrollTop.value = scrollTop.value + 10000;
+			}, 120);
 		});
 	};
 	
@@ -678,6 +694,7 @@
 			role: 'assistant',
 			content: '您好！我是智能咨询助手，很高兴为您服务。为了更好地帮助您，请告诉我您需要咨询哪方面的问题？'
 		}];
+		scrollToBottom();
 	};
 	
 	const stopCurrentTask = () => {

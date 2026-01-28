@@ -127,12 +127,53 @@
 					uni.hideLoading()
 					
 					if (res.code === 200) {
+						try {
+							const cacheKey = 'analysis_report_params_cache_v1'
+							let cache = uni.getStorageSync(cacheKey)
+							if (typeof cache === 'string') {
+								try {
+									cache = JSON.parse(cache)
+								} catch (e) {
+									cache = null
+								}
+							}
+							const normalizedCache = cache && typeof cache === 'object' ? cache : {}
+							const byId = normalizedCache.byId && typeof normalizedCache.byId === 'object' ? normalizedCache.byId : {}
+							const byName = normalizedCache.byName && typeof normalizedCache.byName === 'object' ? normalizedCache.byName : {}
+							
+							let reportId = null
+							if (res && res.data !== undefined && res.data !== null) {
+								if (typeof res.data === 'object') {
+									reportId = res.data.id || res.data.reportId || res.data.report_id || null
+								} else {
+									reportId = res.data
+								}
+							}
+							if (!reportId && res && res.id) reportId = res.id
+							
+							const payload = { ...params, _ts: Date.now() }
+							if (reportId !== null && reportId !== undefined && String(reportId).length > 0) {
+								byId[String(reportId)] = payload
+							}
+							if (params.reportName) {
+								byName[String(params.reportName)] = payload
+							}
+							
+							uni.setStorageSync(cacheKey, {
+								byId,
+								byName,
+								updatedAt: Date.now()
+							})
+						} catch (e) {}
 						uni.showToast({
-							title: '报告生成成功',
-							icon: 'success'
+							title: '报告正在生成中',
+							icon: 'none'
 						})
-						// 生成成功后可以跳转到历史列表或详情页
-						// 这里暂时保留Toast提示
+						setTimeout(() => {
+							uni.navigateTo({
+								url: '/pages/Home/Analysis/history_report'
+							})
+						}, 300)
 					} else {
 						uni.showToast({
 							title: res.msg || '生成失败',

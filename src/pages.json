@@ -147,7 +147,9 @@
 			"style": {
 				"navigationBarTitleText": "历史报告",
 				"navigationBarBackgroundColor": "#1E88FF",
-				"navigationBarTextStyle": "white"
+				"navigationBarTextStyle": "white",
+				"enablePullDownRefresh": true,
+				"backgroundTextStyle": "dark"
 			}
 		},
 		{
