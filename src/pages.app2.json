@@ -82,6 +82,12 @@
 			}
 		},
 		{
+			"path": "pages/Home/Component/user_agreement",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/Home/Component/government",
 			"style": {
 				"navigationStyle": "custom"

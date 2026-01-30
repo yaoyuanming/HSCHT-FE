@@ -48,26 +48,27 @@
 				statusBarHeight: 20, // 默认状态栏高度
 				sections: [{
 						title: '出口贸易服务',
-						items: [{
-								name: '报关报检服务',
-								icon: 'checkbox-filled',
-								color: '#1e90ff'
-							},
+						items: [
+							// {
+							// 	name: '报关报检服务',
+							// 	icon: 'checkbox-filled',
+							// 	color: '#1e90ff'
+							// },
 							{
 								name: '国际物流安排',
 								icon: 'paperplane-filled',
 								color: '#1e90ff'
 							},
-							{
-								name: '外汇结算服务',
-								icon: 'wallet-filled',
-								color: '#1e90ff'
-							},
-							{
-								name: '出口退税办理',
-								icon: 'compose',
-								color: '#1e90ff'
-							}
+							// {
+							// 	name: '外汇结算服务',
+							// 	icon: 'wallet-filled',
+							// 	color: '#1e90ff'
+							// },
+							// {
+							// 	name: '出口退税办理',
+							// 	icon: 'compose',
+							// 	color: '#1e90ff'
+							// }
 						]
 					},
 					{

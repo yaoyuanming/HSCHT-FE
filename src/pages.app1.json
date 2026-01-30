@@ -58,6 +58,12 @@
 			}
 		},
 		{
+			"path": "pages/Home/Component/user_agreement",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/Home/Component/government",
 			"style": {
 				"navigationStyle": "custom"
@@ -156,6 +162,20 @@
 			"path": "pages/Home/Analysis/report_example",
 			"style": {
 				"navigationBarTitleText": "报告示例"
+			}
+		},
+		{
+			"path" : "pages/My/funtion/company_profile/add_company",
+			"style" : 
+			{
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path" : "pages/My/funtion/company_profile/compant_detail",
+			"style" : 
+			{
+				"navigationStyle": "custom"
 			}
 		}
 	],
