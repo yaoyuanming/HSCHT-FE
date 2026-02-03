@@ -23,7 +23,7 @@ npm install
 
 ## 启动（开发）
 
-### 微信小程序（APP1/APP2）
+### 微信小程序（APP1/APP2/APP3）
 
 项目内置了切换脚本，会把对应配置覆盖到 `src/pages.json` / `src/manifest.json` / `.env`：
 
@@ -37,6 +37,12 @@ npm run dev:mp-weixin:app1
 
 ```bash
 npm run dev:mp-weixin:app2
+```
+
+- APP3（心月明）：
+
+```bash
+npm run dev:mp-weixin:app3
 ```
 
 编译完成后，用微信开发者工具导入：
@@ -61,7 +67,7 @@ npm run dev:h5
 
 ## 构建（发布）
 
-### 微信小程序（APP1/APP2）
+### 微信小程序（APP1/APP2/APP3）
 
 - APP1：
 
@@ -75,27 +81,35 @@ npm run build:mp-weixin:app1
 npm run build:mp-weixin:app2
 ```
 
+- APP3：
+
+```bash
+npm run build:mp-weixin:app3
+```
+
 输出目录示例：
 
 ```
 dist/build/mp-weixin
 ```
 
-## 配置说明（APP1/APP2 切换）
+## 配置说明（APP1/APP2/APP3 切换）
 
-- `src/pages.app1.json` / `src/pages.app2.json`：页面路由与 tabBar
-- `src/manifest.app1.json` / `src/manifest.app2.json`：应用配置
-- `.env.app1` / `.env.app2`：环境变量
+- `src/pages.app1.json` / `src/pages.app2.json` / `src/pages.app3.json`：页面路由与 tabBar
+- `src/manifest.app1.json` / `src/manifest.app2.json` / `src/manifest.app3.json`：应用配置
+- `.env.app1` / `.env.app2` / `.env.app3`：环境变量
 
 业务标识：
 
 - APP1：海丝
 - APP2：易广善
+- APP3：心月明
 
 切换命令：
 
 - `npm run switch:app1`
 - `npm run switch:app2`
+- `npm run switch:app3`
 
 ## My（我的）页面使用说明（不同 App 显示不同内容）
 
@@ -119,8 +133,9 @@ My 页的差异主要在「我的服务」模块：页面内维护一份完整�
 
 默认映射定义在 `My.vue` 内：
 
-- APP1（`VITE_APP_KEY=app1`）：`health`、`company`、`gov`、`consult`
-- APP2（`VITE_APP_KEY=app2`）：`project`、`course`
+- APP1（`VITE_APP_KEY=app1`）：`company`、`gov`、`consult`
+- APP2（`VITE_APP_KEY=app2`）：`project`、`course`、`health`
+- APP3（`VITE_APP_KEY=app3`）：当前未在默认映射内配置，会展示全部 `allServiceList`；如需控制请配置 `VITE_MY_SERVICE_KEYS`
 
 对应的 `allServiceList`（key 清单）：
 

@@ -65,7 +65,8 @@
 	// 说明：key 必须与 allServiceList 中的 item.key 对应。
 	const myServiceAllowByAppKey = {
 		app1: ['company', 'gov', 'consult'],
-		app2: ['project', 'course','health']
+		app2: ['project', 'course','health'],
+		app3: ['project', 'course','health']
 	}
 
 	// 获取“我的服务”允许显示的 key 列表。
