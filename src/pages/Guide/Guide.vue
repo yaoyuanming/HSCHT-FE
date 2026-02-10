@@ -45,10 +45,12 @@
 				</view>
 			</view>
 		</scroll-view>
+		<CustomTabBar :current="3" />
 	</view>
 </template>
 
 <script>
+	import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
 	import UniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue'
 	import {
 		getCountryList
@@ -60,6 +62,7 @@
 
 	export default {
 		components: {
+			CustomTabBar,
 			UniIcons
 		},
 		data() {

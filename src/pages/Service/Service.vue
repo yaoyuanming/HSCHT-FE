@@ -15,11 +15,13 @@
 			<HomeService ref="homeService" @close="closePopup" :initial-country="selectedCountry"
 				:all-countries="countryList"></HomeService>
 		</uni-popup>
+		<CustomTabBar :current="2" />
 	</view>
 </template>
 
 <script>
 	import HomeService from '@/pages/Home/Component/Home_Service.vue'
+	import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
 	import UniPopup from '@/uni_modules/uni-popup/components/uni-popup/uni-popup.vue'
 	import {
 		getCountryList
@@ -27,6 +29,7 @@
 
 	export default {
 		components: {
+			CustomTabBar,
 			HomeService,
 			UniPopup
 		},

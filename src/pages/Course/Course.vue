@@ -62,10 +62,12 @@
 				<text v-else-if="finished && courses.length >= pager.pageSize">—— 已经到底啦 ——</text>
 			</view>
 		</view>
+		<CustomTabBar :current="1" />
 	</view>
 </template>
 
 <script setup>
+	import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
 	import { ref } from 'vue'
 	import { onLoad, onPullDownRefresh, onReachBottom, onShow } from '@dcloudio/uni-app'
 	import { getActivityList } from '@/api/activity'

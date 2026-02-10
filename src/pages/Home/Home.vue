@@ -1,118 +1,158 @@
 <template>
 	<view class="container">
-		<!-- 顶部 Banner 区域 -->
-		<view class="banner-section">
-			<swiper class="banner-swiper" :indicator-dots="true" :autoplay="true" :interval="3000" :duration="1000"
-				indicator-active-color="#ffffff" indicator-color="rgba(255,255,255,0.5)">
-				<swiper-item v-for="(item, index) in banners" :key="index">
-					<view class="banner-item">
-						<image class="banner-image" :src="item.image" mode="aspectFill"></image>
-						<!-- 渐变遮罩和文字 -->
-						<view class="banner-overlay">
-							<view class="banner-text-content">
-								<text class="banner-title">{{ item.title }}</text>
-								<text class="banner-subtitle">{{ item.subtitle }}</text>
-							</view>
-						</view>
+		<!-- 顶部蓝色区域 -->
+		<view class="top-header">
+			<!-- 状态栏占位 -->
+			<view :style="{ height: statusBarHeight + 'px' }"></view>
+			<!-- 自定义导航栏 -->
+			<view class="custom-nav" :style="{ height: navBarHeight + 'px' }">
+				<view class="nav-left">
+					<text class="app-name">海丝出海通</text>
+				</view>
+				<view class="search-bar">
+					<uni-icons type="search" size="16" color="#ffffff"></uni-icons>
+					<text class="search-placeholder">搜索</text>
+				</view>
+				<!-- 胶囊按钮占位 (大概宽度) -->
+				<view class="capsule-placeholder"></view>
+			</view>
+
+			<!-- 统计数据 -->
+			<view class="stats-section">
+				<view class="stat-item">
+					<view class="stat-num-wrapper">
+						<text class="stat-num">20000</text>
+						<text class="stat-unit">家</text>
 					</view>
-				</swiper-item>
-			</swiper>
+					<text class="stat-desc">企业出海数量</text>
+				</view>
+				<view class="stat-item">
+					<view class="stat-num-wrapper">
+						<text class="stat-num">1800</text>
+						<text class="stat-unit">条</text>
+					</view>
+					<text class="stat-desc">国际采风商机</text>
+				</view>
+			</view>
 		</view>
 
+		<!-- 船只 Banner 区域 -->
+		<view class="ship-banner-section">
+			<image class="ship-image" src="/static/home/banner.png" mode="widthFix"></image>
+		</view>
+
+		<!-- 悬浮菜单卡片 -->
+		<view class="floating-menu-card">
+			<view class="menu-item" v-for="(item, index) in menuItems" :key="index" @click="handleMenuClick(item)">
+				<view class="menu-icon-wrapper">
+					<image :src="item.icon" class="menu-icon" mode="aspectFit"></image>
+				</view>
+				<text class="menu-name">{{ item.name }}</text>
+			</view>
+		</view>
+
+		<!-- 主内容区 -->
 		<view class="main-content">
-			<!-- 功能卡片区 (2列) -->
-			<view class="function-grid">
-				<!-- 我要咨询 -->
-			<view class="func-card" @click="handleConsult">
-				<!-- 装饰背景圆 -->
-				<view class="card-decor decor-green"></view>
-				<view class="icon-wrapper bg-green-light">
-					<image src="/static/index/2.png" mode="aspectFit" style="width: 50rpx; height: 50rpx;"></image>
-				</view>
-				<text class="card-title">我要咨询</text>
-				<text class="card-desc">专业顾问在线解答{{"\n"}}出海疑问</text>
-			</view>
-
-			<!-- 出海分析 -->
-			<view class="func-card" @click="handleAnalysis">
-				<!-- 装饰背景圆 -->
-				<view class="card-decor decor-blue"></view>
-				<view class="icon-wrapper bg-blue-light">
-					<image src="/static/index/3.png" mode="aspectFit" style="width: 45rpx; height: 45rpx;"></image>
-				</view>
-				<text class="card-title">出海分析</text>
-				<text class="card-desc">专业AI专家生成{{"\n"}}出海报告</text>
-			</view>
-			</view>
-
-			<!-- 政务服务 (Moved from above) -->
-			<view class="section-header">
-				<view class="header-left">
-					<image src="/static/index/1.png" style="width: 32rpx; height: 32rpx; margin-right: 12rpx;" mode="aspectFit"></image>
-					<text class="header-title" style="margin-left: 0;">政务服务</text>
-				</view>
-			</view>
-
-			<view class="gov-action-card" @click="handleGov">
-				<view class="gov-btn-content">
-					<image src="/static/index/2.png" style="width: 42rpx; height: 42rpx;" mode="aspectFit"></image>
-					<text class="gov-btn-text">政策服务咨询</text>
-				</view>
-			</view>
-
-			<!-- 热门贸易国家 -->
-			<view class="section-header">
-				<view class="header-left">
-					<uni-icons type="pyq" size="21" color="#1890ff"></uni-icons>
-					<text class="header-title">热门贸易国家</text>
-				</view>
-			</view>
-
-			<view class="country-grid">
-				<view class="country-card" v-for="(item, index) in countries" :key="index" @click="handleCountry(item)">
-					<view class="flag-wrapper" :class="getFlagBgClass(index)">
-						<image class="country-flag" :src="item.nationalFlagUrl" mode="aspectFit"></image>
+			<!-- 服务卡片 (白色背景) -->
+			<view class="service-card-section">
+				<!-- 服务 Tab 切换 -->
+				<view class="service-tabs">
+					<view class="tab-item" :class="{ active: currentTab === 0 }" @click="currentTab = 0">
+						<text class="tab-text">出海境外服务</text>
+						<view class="tab-line" v-if="currentTab === 0"></view>
 					</view>
-					<text class="country-name">{{ item.countryName }}</text>
+					<view class="tab-item" :class="{ active: currentTab === 1 }" @click="currentTab = 1">
+						<text class="tab-text">出海境内服务</text>
+						<view class="tab-line" v-if="currentTab === 1"></view>
+					</view>
 				</view>
 
-				<!-- 更多国家 -->
-				<view class="country-card" @click="handleMore">
-					<view class="flag-wrapper bg-more">
-						<uni-icons type="plusempty" size="20" color="#1890ff"></uni-icons>
+				<view class="service-content">
+					<!-- 国家列表 (Swiper 轮播) -->
+					<view class="country-swiper-container" v-if="currentTab === 0">
+						<swiper class="country-swiper" :indicator-dots="true" indicator-active-color="#1890ff"
+							indicator-color="#e0e0e0">
+							<swiper-item v-for="(page, pageIndex) in countryPages" :key="pageIndex">
+								<view class="country-grid">
+									<view class="country-card" v-for="(item, index) in page" :key="index"
+										@click="handleCountry(item)">
+										<view class="flag-wrapper">
+											<image class="country-flag" :src="item.nationalFlagUrl" mode="aspectFill">
+											</image>
+										</view>
+										<text class="country-name">{{ item.countryName }}</text>
+									</view>
+								</view>
+							</swiper-item>
+						</swiper>
 					</view>
-					<text class="country-name">更多国家</text>
+
+					<!-- 境内服务 (Swiper 轮播) -->
+					<view class="country-swiper-container" v-if="currentTab === 1">
+						<swiper class="country-swiper" :indicator-dots="true" indicator-active-color="#1890ff"
+							indicator-color="#e0e0e0">
+							<swiper-item v-for="(page, pageIndex) in domesticPages" :key="pageIndex">
+								<view class="country-grid">
+									<view class="domestic-item" v-for="(item, idx) in page" :key="idx"
+										@click="handleDomesticItem(item)">
+										<view class="domestic-icon-box" :class="'bg-' + (idx % 4)">
+											<uni-icons :type="item.icon" size="24"
+												:color="item.color || '#1e90ff'"></uni-icons>
+										</view>
+										<text class="domestic-name">{{ item.name }}</text>
+									</view>
+								</view>
+							</swiper-item>
+						</swiper>
+					</view>
 				</view>
 			</view>
 
-			<!-- 近期活动 -->
-			<view class="section-header">
-				<view class="header-left">
-					<view class="header-icon-bg" style="background-color: #fa8c16; border-radius: 20%; width: 50rpx; height: 50rpx; display: flex; align-items: center; justify-content: center;">
-						<uni-icons type="calendar-filled" size="19" color="#ffffff"></uni-icons>
-					</view>
-					<text class="header-title">近期活动</text>
-				</view>
-			</view>
 
-			<view class="activity-list">
-				<view class="activity-card" v-for="(item, index) in activities" :key="index" @click="handleActivityClick(item)">
-					<view class="activity-left">
-						<view class="activity-icon-wrapper" :style="{ backgroundColor: getIconBg(index) }">
-							<uni-icons type="calendar-filled" size="28" :color="getIconColor(index)"></uni-icons>
+			<!-- 国际采购信息 -->
+			<view class="procurement-section">
+				<view class="section-header">
+					<text class="header-title">国际采购信息</text>
+					<view class="header-right">
+						<text class="more-text">更多</text>
+						<uni-icons type="right" size="14" color="#999999"></uni-icons>
+					</view>
+				</view>
+				<view class="procurement-grid">
+					<view class="procurement-card" v-for="(item, index) in procurementItems" :key="index">
+						<image v-if="item.image" class="procurement-img" :src="item.image" mode="aspectFill"
+							@error="handleProcurementImageError(index)"></image>
+						<view v-else class="procurement-img-placeholder">
+							<text class="procurement-img-placeholder-text">无图片</text>
 						</view>
-						<view class="activity-info">
-							<text class="activity-title">{{ item.activityName }}</text>
-							<view class="activity-meta">
-								<uni-icons type="calendar" size="12" color="#999999"></uni-icons>
-								<text class="meta-text">{{ item.activityTimeStart }}</text>
-								<view class="meta-divider"></view>
-								<uni-icons type="location" size="12" color="#999999"></uni-icons>
-								<text class="meta-text">{{ item.address }}</text>
-							</view>
+						<text class="procurement-title">{{ item.title }}</text>
+						<text class="procurement-desc">{{ item.desc }}</text>
+					</view>
+				</view>
+			</view>
+
+			<!-- 热门资讯 -->
+			<view class="section-header">
+				<view class="header-left">
+					<text class="header-title">热门资讯</text>
+				</view>
+				<view class="header-right">
+					<text class="more-text">更多</text>
+					<uni-icons type="right" size="14" color="#999999"></uni-icons>
+				</view>
+			</view>
+
+			<view class="news-list">
+				<view class="news-card" v-for="(item, index) in hotNewsList" :key="index" @click="handleNewsClick(item)">
+					<image class="news-image" :src="item.image" mode="aspectFill"></image>
+					<view class="news-content">
+						<text class="news-title">{{ item.title }}</text>
+						<text class="news-desc">{{ item.desc }}</text>
+						<view class="news-meta">
+							<uni-icons type="time" size="12" color="#999999"></uni-icons>
+							<text class="news-time">{{ item.time }}</text>
 						</view>
 					</view>
-					<uni-icons type="right" size="14" color="#cccccc"></uni-icons>
 				</view>
 			</view>
 		</view>
@@ -122,131 +162,310 @@
 			<HomeService ref="homeService" @close="closePopup" :initial-country="selectedCountry"
 				:all-countries="allCountries"></HomeService>
 		</uni-popup>
+		<CustomTabBar :current="0" />
 	</view>
 </template>
 
 <script setup>
 	import {
 		ref,
-		onMounted
+		onMounted,
+		computed
 	} from 'vue'
-	import { onShow } from '@dcloudio/uni-app'
+	import {
+		onShow
+	} from '@dcloudio/uni-app'
 	import {
 		getCountryList
 	} from '@/api/country.js'
 	import {
 		getActivityList
 	} from '@/api/activity/index.js'
+	import {
+		getPurchaseInfoList
+	} from '@/api/home/purchase/index.js'
 	import HomeService from './Component/Home_Service.vue'
+	import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
 	import UniPopup from '@/uni_modules/uni-popup/components/uni-popup/uni-popup.vue'
 	import UniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue'
 
-	// Banner 数据
-	const banners = ref([{
-			image: 'https://assets.mockplus.cn/ai/newImages/pexels/7153.jpg',
-			title: '海丝出海通',
-			subtitle: '一站式全球政策查询与服务'
+	// 系统信息
+	const statusBarHeight = ref(20)
+	const navBarHeight = ref(44)
+
+	// 菜单数据
+	const menuItems = ref([{
+			name: '出海分析',
+			icon: '/static/home/出海调研.png',
+			path: '/pages/Home/Analysis/chuhai'
 		},
 		{
-			image: 'https://assets.mockplus.cn/ai/newImages/pexels/8791.jpg',
-			title: '国际合作峰会',
-			subtitle: '连接全球商业机遇'
+			name: '我要咨询',
+			icon: '/static/home/咨询办理.png',
+			path: '/pages/Home/Component/ai_assistant'
+		}, // 假设路径
+		{
+			name: '出海分析师',
+			icon: '/static/home/出海分析师.png',
+			path: '/pages/Home/Component/ai_assistant'
 		},
 		{
-			image: '/static/Country/china.jpg',
-			title: '高效物流方案',
-			subtitle: '全球配送网络覆盖'
-		}
+			name: 'AI工具',
+			icon: '/static/home/ai工具.png',
+			path: '/pages/Home/Component/ai_assistant'
+		} // 假设路径
 	])
+
+	// Tab 状态
+	const currentTab = ref(0)
 
 	// 国家数据
 	const countries = ref([])
 	const allCountries = ref([])
 	const popup = ref(null)
 	const selectedCountry = ref({})
-	const homeService = ref(null)
+
+	// 境内服务数据 (来自 government.vue)
+	const domesticServices = ref([{
+			title: '出口贸易服务',
+			items: [
+				// {
+				// 	name: '报关报检服务',
+				// 	icon: 'checkbox-filled',
+				// 	color: '#1e90ff'
+				// },
+				{
+					name: '国际物流安排',
+					icon: 'paperplane-filled',
+					color: '#1e90ff'
+				},
+				// {
+				// 	name: '外汇结算服务',
+				// 	icon: 'wallet-filled',
+				// 	color: '#1e90ff'
+				// },
+				// {
+				// 	name: '出口退税办理',
+				// 	icon: 'compose',
+				// 	color: '#1e90ff'
+				// }
+			]
+		},
+		{
+			title: '境外投资服务',
+			items: [{
+					name: '投资环境评估',
+					icon: 'pyq',
+					color: '#1e90ff'
+				},
+				{
+					name: '项目可行性研究',
+					icon: 'list',
+					color: '#1e90ff'
+				},
+				{
+					name: '海外公司注册',
+					icon: 'shop-filled',
+					color: '#1e90ff'
+				},
+				{
+					name: '投资融资服务',
+					icon: 'vip-filled',
+					color: '#1e90ff'
+				}
+			]
+		},
+		{
+			title: '综合支持服务',
+			items: [{
+					name: '多语言翻译服务',
+					icon: 'chat-filled',
+					color: '#1e90ff'
+				},
+				{
+					name: '法律文书公证',
+					icon: 'folder-add-filled',
+					color: '#1e90ff'
+				},
+				{
+					name: '商务谈判支持',
+					icon: 'staff-filled',
+					color: '#1e90ff'
+				},
+				{
+					name: '市场调研报告',
+					icon: 'bars',
+					color: '#1e90ff'
+				}
+			]
+		}
+	])
+
+
+	// 计算属性：将国家数据分页，每页8个
+	const countryPages = computed(() => {
+		const pages = []
+		// 使用 allCountries 确保分页是基于所有数据的（或者根据需求限制总数后再分页）
+		// 之前是 slice(0,8)，现在我们想展示更多，通过分页
+		const sourceList = allCountries.value.length > 0 ? allCountries.value : []
+		for (let i = 0; i < sourceList.length; i += 8) {
+			pages.push(sourceList.slice(i, i + 8))
+		}
+		// 如果没有数据，给个空页防止报错? 或者 v-if 控制
+		return pages
+	})
+
+	// 计算属性：将境内服务数据扁平化并分页，每页8个
+	const domesticPages = computed(() => {
+		const pages = []
+		let allItems = []
+		domesticServices.value.forEach(section => {
+			if (section.items && Array.isArray(section.items)) {
+				allItems = allItems.concat(section.items)
+			}
+		})
+
+		for (let i = 0; i < allItems.length; i += 8) {
+			pages.push(allItems.slice(i, i + 8))
+		}
+		return pages
+	})
+
+	// 热门资讯数据 (动态获取)
+	const hotNewsList = ref([])
 	
-	// 活动数据
-	const activities = ref([])
+	// 国际采购信息数据（接口渲染，仅取前3条）
+	const procurementItems = ref([])
+
+	// 获取系统信息
+	const initSystemInfo = () => {
+		const info = uni.getSystemInfoSync()
+		statusBarHeight.value = info.statusBarHeight || 20
+		// 胶囊按钮位置处理（小程序）
+		// #ifdef MP-WEIXIN
+		const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
+		navBarHeight.value = (menuButtonInfo.top - statusBarHeight.value) * 2 + menuButtonInfo.height
+		// #endif
+	}
 
 	// 获取国家列表
 	const fetchCountryList = async () => {
 		try {
 			const res = await getCountryList()
 			if (!res || (res.code !== 200 && res.code !== 0)) return
-			// 兼容不同的返回结构
 			const dataList = res.data?.rows || res.rows || res.data || []
 			if (Array.isArray(dataList)) {
 				const baseUrl = import.meta.env.VITE_API_BASE_URL || ''
 				allCountries.value = dataList.map(item => ({
 					...item,
-					nationalFlagUrl: item.nationalFlagUrl ? (item.nationalFlagUrl.startsWith('http') ? item.nationalFlagUrl : baseUrl + item.nationalFlagUrl) : ''
+					nationalFlagUrl: item.nationalFlagUrl ? (item.nationalFlagUrl.startsWith('http') ? item
+						.nationalFlagUrl : baseUrl + item.nationalFlagUrl) : ''
 				}))
-				countries.value = allCountries.value.slice(0, 8)
+				// 注意：这里不再只取前8个，而是全部给 allCountries，由 countryPages 进行分页
+				countries.value = allCountries.value.slice(0, 8) // 保持兼容，虽然模板里改用了 countryPages
 			}
 		} catch (e) {
 			console.error('获取国家列表失败', e)
 		}
 	}
-	
+
 	// 获取活动列表
 	const fetchActivityList = async () => {
 		try {
 			const res = await getActivityList({
-				status: '1'
+				status: '1',
+				pageSize: 3,
+				pageNum: 1
 			})
 			if (!res || (res.code !== 200 && res.code !== 0)) return
-			// 假设返回结构类似
 			const dataList = res.rows || res.data?.rows || res.data || []
 			if (Array.isArray(dataList)) {
-				activities.value = dataList.map(item => ({
-					...item,
-					activityTimeStart: item.activityTimeStart ? item.activityTimeStart.substring(0, 10) : ''
-				}))
+				hotNewsList.value = dataList.map(item => {
+					// 简单去除 HTML 标签
+					const desc = item.introduction ? item.introduction.replace(/<[^>]+>/g, '') : ''
+					return {
+						id: item.id,
+						image: item.activityImageUrl || '/static/home/banner.png',
+						title: item.activityName || '未命名活动',
+						desc: desc,
+						time: item.activityTimeStart || ''
+					}
+				})
 			}
 		} catch (e) {
 			console.error('获取活动列表失败', e)
 		}
 	}
 
-	// 简单的背景色循环
-	const getFlagBgClass = (index) => {
-		const classes = ['bg-blue', 'bg-red', 'bg-yellow', 'bg-green', 'bg-purple', 'bg-orange']
-		return classes[index % classes.length]
+	// 获取国际采购信息列表（仅渲染前3条）
+	const fetchPurchaseInfos = async () => {
+		try {
+			const res = await getPurchaseInfoList({
+				pageNum: 1,
+				pageSize: 10
+			})
+			if (!res || (res.code !== 200 && res.code !== 0)) return
+			const dataList = res.rows || res.data?.rows || []
+			if (Array.isArray(dataList)) {
+				const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+				const filtered = dataList.filter(item => String(item?.status ?? '') !== '2')
+				const top3 = filtered.slice(0, 3).map(item => {
+					const rawImg = item.purchaseInfoUrl || item.purchaseInfoOss || ''
+					const cleanedImg = String(rawImg || '').trim().replace(/^[`'"]+|[`'"]+$/g, '')
+					const normalizedPath = cleanedImg ? (cleanedImg.startsWith('/') ? cleanedImg : `/${cleanedImg}`) : ''
+					const isAbsolute = /^https?:\/\//i.test(cleanedImg)
+					const image = cleanedImg ? (isAbsolute ? cleanedImg : (baseUrl ? (baseUrl + normalizedPath) : normalizedPath)) : ''
+					return {
+						image,
+						title: item.procurementTitle || item.purchaserName || '采购信息',
+						desc: item.description || item.procurementContent || ''
+					}
+				})
+				procurementItems.value = top3
+			}
+		} catch (e) {
+			console.error('获取国际采购信息失败', e)
+		}
 	}
-	
+
+	const handleProcurementImageError = (index) => {
+		if (!Array.isArray(procurementItems.value)) return
+		if (!procurementItems.value[index]) return
+		procurementItems.value[index].image = ''
+	}
+
 	// 活动图标背景色
 	const getIconBg = (index) => {
 		const colors = ['rgba(24, 144, 255, 0.1)', 'rgba(250, 140, 22, 0.1)', 'rgba(82, 196, 26, 0.1)']
 		return colors[index % colors.length]
 	}
-	
+
 	const getIconColor = (index) => {
 		const colors = ['#1890ff', '#fa8c16', '#52c41a']
 		return colors[index % colors.length]
 	}
 
 	// 事件处理
-	const handleExplore = () => {
-		console.log('Explore clicked')
-	}
-
-	const handleConsult = () => {
-		uni.navigateTo({
-			url: '/pages/Home/Component/ai_assistant'
-		})
-	}
-
-	const handleAnalysis = () => {
-		uni.navigateTo({
-			url: '/pages/Home/Analysis/chuhai'
-		})
-	}
-
-	const handleGov = () => {
-		uni.navigateTo({
-			url: '/pages/Home/Component/government'
-		})
+	const handleMenuClick = (item) => {
+		if (item.name === '出海分析师') {
+			uni.showToast({
+				title: '正在开发，敬请期待',
+				icon: 'none'
+			})
+			return
+		}
+		if (item.name === 'AI工具') {
+			uni.showToast({
+				title: '正在开发，敬请期待',
+				icon: 'none'
+			})
+			return
+		}
+		if (item.path) {
+			uni.navigateTo({
+				url: item.path
+			})
+		}
 	}
 
 	const handleCountry = (item) => {
@@ -254,18 +473,19 @@
 		popup.value.open()
 	}
 	
-	const handleActivityClick = (item) => {
+	const handleDomesticItem = (item) => {
+		uni.navigateTo({
+			url: `/pages/Home/Component/consult?service=${item.name}`
+		});
+	}
+
+	const handleNewsClick = (item) => {
 		if (item.id) {
 			uni.navigateTo({
+				// 假设有一个新闻详情页，或者先跳到原来的 detail
 				url: `/pages/Course/detail?id=${item.id}`
 			})
 		}
-	}
-
-	const handleMore = () => {
-		uni.switchTab({
-			url: '/pages/Service/Service'
-		})
 	}
 
 	const closePopup = () => {
@@ -275,9 +495,11 @@
 	const refreshHomeData = () => {
 		fetchCountryList()
 		fetchActivityList()
+		fetchPurchaseInfos()
 	}
 
 	onMounted(() => {
+		initSystemInfo()
 		refreshHomeData()
 	})
 
@@ -290,164 +512,291 @@
 	.container {
 		min-height: 100vh;
 		background-color: #f5f7fa;
-		padding-bottom: 40rpx;
+		padding-bottom: 30rpx;
 	}
 
-	/* Banner Section */
-	.banner-section {
-		width: 100%;
-		/* 按照设计图，banner可能有圆角和边距，或者全宽。这里参考HTML代码是 rounded-2xl mx-4 my-4 */
-		/* uni-app中swiper通常全宽，但我们可以给内部item加padding来实现圆角效果 */
-		height: 420rpx;
-		background-color: #ffffff;
+	/* Top Header Section */
+	.top-header {
+		background: linear-gradient(180deg, #1890ff 0%, #3ca0ff 100%);
 		padding-bottom: 20rpx;
 	}
 
-	.banner-swiper {
-		width: 100%;
-		height: 100%;
-	}
-
-	.banner-item {
-		width: 100%;
-		height: 100%;
-		position: relative;
-	}
-
-	.banner-image {
-		width: 100%;
-		height: 100%;
-	}
-
-	.banner-overlay {
-		position: absolute;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		top: 0;
-		background: linear-gradient(90deg, rgba(24, 144, 255, 0.85) 0%, rgba(24, 144, 255, 0.3) 100%);
+	.custom-nav {
 		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		padding: 40rpx;
+		align-items: center;
+		padding: 0 24rpx;
+		/* 确保导航栏内容垂直居中 */
 	}
 
-	.banner-text-content {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-	}
-
-	.banner-title {
-		font-size: 44rpx;
+	.app-name {
+		font-size: 36rpx;
 		font-weight: bold;
 		color: #ffffff;
-		display: block;
-		margin-bottom: 20rpx;
-		letter-spacing: 2rpx;
+		margin-right: 20rpx;
+		white-space: nowrap;
 	}
 
-	.banner-subtitle {
+	.search-bar {
+		flex: 1;
+		height: 64rpx;
+		background-color: rgba(255, 255, 255, 0.2);
+		border-radius: 32rpx;
+		display: flex;
+		align-items: center;
+		padding: 0 20rpx;
+		margin-right: 20rpx;
+	}
+
+	.search-placeholder {
 		font-size: 28rpx;
-		color: rgba(255, 255, 255, 0.9);
-		letter-spacing: 1rpx;
+		color: #ffffff;
+		margin-left: 10rpx;
+	}
+
+	.capsule-placeholder {
+		width: 180rpx;
+		/* 胶囊按钮的大致宽度 */
+	}
+
+	.stats-section {
+		display: flex;
+		justify-content: space-around;
+		padding: 40rpx 0 20rpx;
+	}
+
+	.stat-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.stat-num-wrapper {
+		display: flex;
+		align-items: baseline;
+	}
+
+	.stat-num {
+		font-size: 48rpx;
+		font-weight: bold;
+		color: #ffffff;
+	}
+
+	.stat-unit {
+		font-size: 24rpx;
+		color: #ffffff;
+		margin-left: 4rpx;
+	}
+
+	.stat-desc {
+		font-size: 24rpx;
+		color: rgba(255, 255, 255, 0.8);
+		margin-top: 8rpx;
+	}
+
+	/* Ship Banner Section */
+	.ship-banner-section {
+		width: 100%;
+		position: relative;
+		margin-top: -1rpx;
+		/* 消除缝隙 */
+	}
+
+	.ship-image {
+		width: 100%;
+		display: block;
+	}
+
+	/* Floating Menu Card */
+	.floating-menu-card {
+		background-color: #ffffff;
+		margin: -60rpx 30rpx 0;
+		border-radius: 24rpx;
+		padding: 40rpx 0;
+		position: relative;
+		z-index: 10;
+		display: flex;
+		justify-content: space-between;
+		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+	}
+
+	.menu-item {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.menu-icon-wrapper {
+		width: 90rpx;
+		height: 90rpx;
+		background-color: #f5f7fa;
+		/* 默认浅灰底，如果图片自带底色可去掉 */
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-bottom: 16rpx;
+	}
+
+	/* 图片自带圆形底色的话，可以去掉 wrapper 背景 */
+	.menu-icon-wrapper {
+		background: transparent;
+	}
+
+	.menu-icon {
+		width: 90rpx;
+		height: 90rpx;
+	}
+
+	.menu-name {
+		font-size: 26rpx;
+		color: #333333;
+		font-weight: 500;
 	}
 
 	/* Main Content */
 	.main-content {
-		padding: 0 30rpx;
-		margin-top: 40rpx;
-		/* 向上重叠一点banner? 或者直接按流式布局 */
-		position: relative;
-		z-index: 10;
-	}
-
-	/* Function Cards */
-	.function-grid {
-		display: flex;
-		justify-content: space-between;
-		margin-bottom: 40rpx;
-	}
-
-	.func-card {
-		width: 40%;
-		background-color: #ffffff;
-		border-radius: 24rpx;
-		height: 250rpx;
 		padding: 40rpx 30rpx;
-		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.03);
-		position: relative;
-		overflow: hidden;
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		/* 增加点击反馈 */
-		transition: transform 0.2s;
 	}
 	
-	.func-card:active {
-		transform: scale(0.98);
+	/* Service Card Section */
+	.service-card-section {
+		background-color: #ffffff;
+		border-radius: 24rpx;
+		padding: 0;
+		margin-bottom: 40rpx;
+		box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.02);
+		overflow: hidden;
 	}
 
-	.card-decor {
-		position: absolute;
-		top: -20rpx;
-		right: -20rpx;
-		width: 200rpx;
-		height: 200rpx;
-		border-radius: 50%;
-		opacity: 0.1;
+	/* Service Tabs */
+	.service-tabs {
+		display: flex;
+		background-color: #F7F8FA;
 	}
 
-	.decor-green {
-		background-color: #00b42a;
-	}
-
-	.decor-blue {
-		background-color: #1890ff;
-	}
-
-	.icon-wrapper {
-		width: 80rpx;
-		height: 80rpx;
-		border-radius: 20rpx;
+	.tab-item {
+		flex: 1;
+		height: 88rpx;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		margin-bottom: 24rpx;
-		box-shadow: 0 4rpx 10rpx rgba(0,0,0,0.05);
+		position: relative;
 	}
 
-	.bg-green-light {
-		background-color: #00b42a;
+	.tab-item.active {
+		background-color: #ffffff;
 	}
 
-	.bg-blue-light {
-		background-color: #1890ff;
+	.tab-item:first-child.active {
+		border-top-right-radius: 24rpx;
 	}
 
-	.card-title {
-		font-size: 32rpx;
+	.tab-item:last-child.active {
+		border-top-left-radius: 24rpx;
+	}
+
+	.tab-text {
+		font-size: 30rpx;
+		color: #666666;
+		font-weight: 400;
+	}
+
+	.tab-item.active .tab-text {
+		color: #1890ff;
 		font-weight: bold;
-		color: #333333;
-		margin-bottom: 12rpx;
-		position: relative;
-		z-index: 1;
+		font-size: 32rpx;
 	}
 
-	.card-desc {
-		font-size: 24rpx;
-		color: #999999;
-		line-height: 1.4;
-		position: relative;
-		z-index: 1;
-		white-space: pre-wrap; /* 允许换行 */
+	.tab-line {
+		position: absolute;
+		bottom: 12rpx;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 48rpx;
+		height: 6rpx;
+		background-color: #1890ff;
+		border-radius: 3rpx;
 	}
+
+	.service-content {
+		padding: 30rpx 20rpx;
+		background-color: #ffffff;
+	}
+	
+	/* Country Swiper */
+	.country-swiper-container {
+		height: 380rpx; /* 根据内容调整高度 */
+	}
+	
+	.country-swiper {
+		height: 100%;
+	}
+
+	/* Country Grid */
+	.country-grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		/* 改为4列 */
+		gap: 30rpx 20rpx;
+		padding-bottom: 20rpx;
+	}
+
+	.country-card {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.flag-wrapper {
+		width: 80rpx;
+		height: 80rpx;
+		border-radius: 50%;
+		overflow: hidden;
+		margin-bottom: 16rpx;
+		border: 1px solid #f0f0f0;
+	}
+
+	.country-flag {
+		width: 100%;
+		height: 100%;
+	}
+
+	.country-name {
+		font-size: 24rpx;
+		color: #333333;
+	}
+	
+	/* Domestic Service Styles */
+	.domestic-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 12rpx;
+	}
+	
+	.domestic-icon-box {
+		width: 80rpx;
+		height: 80rpx;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background-color: #e6f7ff;
+	}
+	
+	.domestic-name {
+		font-size: 24rpx;
+		color: #333333;
+		text-align: center;
+	}
+
 
 	/* Section Header */
 	.section-header {
 		display: flex;
 		align-items: center;
+		justify-content: space-between;
 		margin-bottom: 24rpx;
 	}
 
@@ -455,165 +804,150 @@
 		display: flex;
 		align-items: center;
 	}
+	
+	.header-right {
+		display: flex;
+		align-items: center;
+	}
+	
+	.more-text {
+		font-size: 24rpx;
+		color: #999999;
+		margin-right: 4rpx;
+	}
 
 	.header-title {
 		font-size: 32rpx;
 		font-weight: bold;
 		color: #333333;
-		margin-left: 12rpx;
+		margin-left: 0;
 	}
-
-	/* Government Service Action */
-	.gov-action-card {
-		background-color: #1890ff;
-		border-radius: 16rpx;
-		padding: 30rpx;
+	
+	/* Procurement Section */
+	.procurement-section {
+		background-color: #ffffff;
+		border-radius: 24rpx;
+		padding: 30rpx 20rpx;
 		margin-bottom: 40rpx;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		box-shadow: 0 4rpx 16rpx rgba(24, 144, 255, 0.2);
+		box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.02);
 	}
 
-	.gov-action-card:active {
-		opacity: 0.9;
-	}
-
-	.gov-btn-content {
-		display: flex;
-		align-items: center;
-		gap: 16rpx;
-	}
-
-	.gov-btn-text {
-	    margin-left: 6rpx;
-		font-size: 32rpx;
-		color: #ffffff;
-		font-weight: bold;
-	}
-
-	/* Country Grid */
-	.country-grid {
+	.procurement-grid {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
 		gap: 20rpx;
-		margin-bottom: 40rpx;
 	}
 
-	.country-card {
-		background-color: #ffffff;
-		border-radius: 20rpx;
-		padding: 30rpx 0;
-		display: flex;
+	.procurement-card {
 		flex-direction: column;
-		align-items: center;
-		box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.02);
+		display: flex;
+		min-width: 0;
+	}
+
+	.procurement-img {
+		width: 100%;
+		height: 250rpx;
+		border-radius: 12rpx;
+		margin-bottom: 12rpx;
+		background-color: #f5f5f5;
 	}
 	
-	.country-card:active {
-		background-color: #f9f9f9;
-	}
-
-	.flag-wrapper {
-		width: 90rpx;
-		height: 90rpx;
-		border-radius: 50%;
+	.procurement-img-placeholder {
+		width: 100%;
+		height: 250rpx;
+		border-radius: 12rpx;
+		margin-bottom: 12rpx;
+		background-color: #f5f5f5;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		margin-bottom: 16rpx;
-		overflow: hidden;
 	}
 	
-	.country-flag {
-		width: 50rpx;
-		height: 50rpx;
-		border-radius: 50%; /* 圆形旗帜 */
-		box-shadow: 0 2rpx 4rpx rgba(0,0,0,0.1);
+	.procurement-img-placeholder-text {
+		font-size: 22rpx;
+		color: #999999;
 	}
 
-	/* 背景色类 */
-	.bg-blue { background-color: #e6f7ff; }
-	.bg-red { background-color: #fff1f0; }
-	.bg-yellow { background-color: #fffbe6; }
-	.bg-green { background-color: #f6ffed; }
-	.bg-purple { background-color: #f9f0ff; }
-	.bg-orange { background-color: #fff7e6; }
-	.bg-more { background-color: #f0f5ff; }
-
-	.country-name {
-		font-size: 26rpx;
+	.procurement-title {
+		font-size: 28rpx;
 		color: #333333;
-		font-weight: 500;
+		font-weight: bold;
+		margin-bottom: 4rpx;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
-	/* Activity List */
-	.activity-list {
+	.procurement-desc {
+		font-size: 22rpx;
+		color: #999999;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	/* News List */
+	.news-list {
 		display: flex;
 		flex-direction: column;
 		gap: 24rpx;
 	}
 
-	.activity-card {
+	.news-card {
 		background-color: #ffffff;
 		border-radius: 24rpx;
-		padding: 30rpx;
+		padding: 20rpx;
 		display: flex;
-		align-items: center;
-		justify-content: space-between;
 		box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.02);
 	}
-	
-	.activity-card:active {
-		background-color: #f9f9f9;
-	}
 
-	.activity-left {
-		display: flex;
-		align-items: flex-start;
-		flex: 1;
-	}
-
-	.activity-icon-wrapper {
-		width: 80rpx;
-		height: 80rpx;
-		border-radius: 50%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		margin-right: 24rpx;
+	.news-image {
+		width: 240rpx;
+		height: 160rpx;
+		border-radius: 12rpx;
+		margin-right: 20rpx;
 		flex-shrink: 0;
+		background-color: #f5f5f5;
 	}
 
-	.activity-info {
+	.news-content {
+		flex: 1;
 		display: flex;
 		flex-direction: column;
-		justify-content: center;
-		padding-top: 4rpx;
+		justify-content: space-between;
 	}
 
-	.activity-title {
+	.news-title {
 		font-size: 30rpx;
-		font-weight: 500;
+		font-weight: bold;
 		color: #333333;
-		margin-bottom: 12rpx;
+		line-height: 1.4;
+		margin-bottom: 8rpx;
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		overflow: hidden;
 	}
 
-	.activity-meta {
+	.news-desc {
+		font-size: 24rpx;
+		color: #666666;
+		margin-bottom: 8rpx;
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 1;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.news-meta {
 		display: flex;
 		align-items: center;
 	}
 
-	.meta-text {
-		font-size: 24rpx;
+	.news-time {
+		font-size: 22rpx;
 		color: #999999;
 		margin-left: 8rpx;
-	}
-	
-	.meta-divider {
-		width: 1px;
-		height: 20rpx;
-		background-color: #eeeeee;
-		margin: 0 16rpx;
 	}
 </style>

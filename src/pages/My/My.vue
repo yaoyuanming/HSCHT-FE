@@ -51,10 +51,12 @@
 				</view>
 			</view>
 		</view>
+		<CustomTabBar :current="4" />
 	</view>
 </template>
 
 <script setup>
+	import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
 	import { ref, computed } from 'vue'
 	import { onShow } from '@dcloudio/uni-app'
 	import { useStore } from 'vuex'

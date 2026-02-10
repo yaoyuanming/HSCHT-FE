@@ -201,16 +201,16 @@
 				"text": "首页"
 			},
 			{
-				"pagePath": "pages/Service/Service",
-				"iconPath": "/static/nav/service.png",
-				"selectedIconPath": "/static/nav/service-active.png",
-				"text": "服务"
-			},
-			{
 				"pagePath": "pages/Course/Course",
 				"iconPath": "/static/nav/course.png",
 				"selectedIconPath": "/static/nav/course-active.png",
 				"text": "活动"
+			},
+			{
+				"pagePath": "pages/Service/Service",
+				"iconPath": "/static/nav/service.png",
+				"selectedIconPath": "/static/nav/service.png",
+				"text": "服务"
 			},
 			{
 				"pagePath": "pages/Guide/Guide",

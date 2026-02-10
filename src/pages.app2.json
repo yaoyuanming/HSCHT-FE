@@ -189,8 +189,8 @@
 			},
 			{
 				"pagePath": "pages/project/index",
-				"iconPath": "/static/nav/service.png",
-				"selectedIconPath": "/static/nav/service-active.png",
+				"iconPath": "/static/nav/xmu.png",
+				"selectedIconPath": "/static/nav/xmu1.png",
 				"text": "项目"
 			},
 			{
