@@ -9,10 +9,11 @@
 				<view class="nav-left">
 					<text class="app-name">海丝出海通</text>
 				</view>
-				<view class="search-bar">
+				<view v-if="enableSearch" class="search-bar">
 					<uni-icons type="search" size="16" color="#ffffff"></uni-icons>
 					<text class="search-placeholder">搜索</text>
 				</view>
+				<view v-else class="search-bar-placeholder"></view>
 				<!-- 胶囊按钮占位 (大概宽度) -->
 				<view class="capsule-placeholder"></view>
 			</view>
@@ -162,7 +163,7 @@
 			<HomeService ref="homeService" @close="closePopup" :initial-country="selectedCountry"
 				:all-countries="allCountries"></HomeService>
 		</uni-popup>
-		<CustomTabBar :current="0" />
+		<CustomTabBar v-if="showCustomTabBar" :current="0" />
 	</view>
 </template>
 
@@ -186,12 +187,15 @@
 	} from '@/api/home/purchase/index.js'
 	import HomeService from './Component/Home_Service.vue'
 	import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
+	import { shouldUseCustomTabBar } from '@/utils/app.js'
 	import UniPopup from '@/uni_modules/uni-popup/components/uni-popup/uni-popup.vue'
 	import UniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue'
 
 	// 系统信息
 	const statusBarHeight = ref(20)
 	const navBarHeight = ref(44)
+	const enableSearch = ref(false)
+	const showCustomTabBar = shouldUseCustomTabBar()
 
 	// 菜单数据
 	const menuItems = ref([{
@@ -544,6 +548,12 @@
 		display: flex;
 		align-items: center;
 		padding: 0 20rpx;
+		margin-right: 20rpx;
+	}
+
+	.search-bar-placeholder {
+		flex: 1;
+		height: 64rpx;
 		margin-right: 20rpx;
 	}
 

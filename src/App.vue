@@ -1,12 +1,12 @@
 <script>
 	import store from '@/store/index'
 	import { completeLoginFlow } from '@/utils/auth'
+	import { shouldUseCustomTabBar } from '@/utils/app.js'
 
 	export default {
 		onLaunch: async function() {
 			// 仅在 app1 时隐藏原生TabBar，因为只有 app1 使用了 CustomTabBar
-			const appKey = import.meta.env.VITE_APP_KEY ? String(import.meta.env.VITE_APP_KEY).trim() : ''
-			if (appKey === 'app1') {
+			if (shouldUseCustomTabBar()) {
 				uni.hideTabBar()
 			}
 			

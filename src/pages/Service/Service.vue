@@ -15,13 +15,14 @@
 			<HomeService ref="homeService" @close="closePopup" :initial-country="selectedCountry"
 				:all-countries="countryList"></HomeService>
 		</uni-popup>
-		<CustomTabBar :current="2" />
+		<CustomTabBar v-if="showCustomTabBar" :current="2" />
 	</view>
 </template>
 
 <script>
 	import HomeService from '@/pages/Home/Component/Home_Service.vue'
 	import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
+	import { shouldUseCustomTabBar } from '@/utils/app.js'
 	import UniPopup from '@/uni_modules/uni-popup/components/uni-popup/uni-popup.vue'
 	import {
 		getCountryList
@@ -32,6 +33,11 @@
 			CustomTabBar,
 			HomeService,
 			UniPopup
+		},
+		computed: {
+			showCustomTabBar() {
+				return shouldUseCustomTabBar()
+			}
 		},
 		data() {
 			return {

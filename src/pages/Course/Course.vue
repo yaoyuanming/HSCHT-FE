@@ -62,15 +62,18 @@
 				<text v-else-if="finished && courses.length >= pager.pageSize">—— 已经到底啦 ——</text>
 			</view>
 		</view>
-		<CustomTabBar :current="1" />
+		<CustomTabBar v-if="showCustomTabBar" :current="1" />
 	</view>
 </template>
 
 <script setup>
 	import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
+	import { shouldUseCustomTabBar } from '@/utils/app.js'
 	import { ref } from 'vue'
 	import { onLoad, onPullDownRefresh, onReachBottom, onShow } from '@dcloudio/uni-app'
 	import { getActivityList } from '@/api/activity'
+
+	const showCustomTabBar = shouldUseCustomTabBar()
 
 	// 响应式变量
 	const defaultCover = '/static/index/video.png'
