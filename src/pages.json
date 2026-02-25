@@ -11,8 +11,7 @@
 		{
 			"path": "pages/Home/Home",
 			"style": {
-				"navigationStyle": "custom",
-				"enablePullDownRefresh": true
+				"navigationStyle": "custom"
 			}
 		},
 		{
