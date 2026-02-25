@@ -22,14 +22,14 @@
 			<view class="stats-section">
 				<view class="stat-item">
 					<view class="stat-num-wrapper">
-						<text class="stat-num">20000</text>
+						<text class="stat-num">{{ enterpriseCount }}</text>
 						<text class="stat-unit">家</text>
 					</view>
 					<text class="stat-desc">企业出海数量</text>
 				</view>
 				<view class="stat-item">
 					<view class="stat-num-wrapper">
-						<text class="stat-num">1800</text>
+						<text class="stat-num">{{ purchaseInfoCount }}</text>
 						<text class="stat-unit">条</text>
 					</view>
 					<text class="stat-desc">国际采风商机</text>
@@ -174,8 +174,12 @@
 		computed
 	} from 'vue'
 	import {
-		onShow
+		onShow,
+		onPullDownRefresh
 	} from '@dcloudio/uni-app'
+	import {
+		handlePullDownRefresh
+	} from '@/utils/refresh.js'
 	import {
 		getCountryList
 	} from '@/api/country.js'
@@ -185,6 +189,10 @@
 	import {
 		getPurchaseInfoList
 	} from '@/api/home/purchase/index.js'
+	import {
+		getUserList,
+		getUserCount
+	} from '@/api/home/index.js'
 	import HomeService from './Component/Home_Service.vue'
 	import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
 	import { shouldUseCustomTabBar } from '@/utils/app.js'
@@ -196,6 +204,11 @@
 	const navBarHeight = ref(44)
 	const enableSearch = ref(false)
 	const showCustomTabBar = shouldUseCustomTabBar()
+
+	// 企业出海数量
+	const enterpriseCount = ref(20000)
+	// 国际采风商机数量
+	const purchaseInfoCount = ref(1800)
 
 	// 菜单数据
 	const menuItems = ref([{
@@ -409,6 +422,12 @@
 				pageSize: 10
 			})
 			if (!res || (res.code !== 200 && res.code !== 0)) return
+			
+			// 更新国际采风商机总数
+			if (res.total !== undefined) {
+				purchaseInfoCount.value = res.total
+			}
+
 			const dataList = res.rows || res.data?.rows || []
 			if (Array.isArray(dataList)) {
 				const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
@@ -500,6 +519,20 @@
 		fetchCountryList()
 		fetchActivityList()
 		fetchPurchaseInfos()
+		fetchUserCount()
+	}
+
+	// 获取用户数量
+	const fetchUserCount = async () => {
+		try {
+			const res = await getUserCount()
+			// 接口返回成功且数据不为 undefined 时更新
+			if (res && res.code === 200 && res.data !== undefined) {
+				enterpriseCount.value = res.data
+			}
+		} catch (e) {
+			console.error('获取用户数量失败', e)
+		}
 	}
 
 	onMounted(() => {
@@ -509,6 +542,13 @@
 
 	onShow(() => {
 		refreshHomeData()
+	})
+
+	// 下拉刷新
+	onPullDownRefresh(() => {
+		handlePullDownRefresh(() => {
+			refreshHomeData()
+		})
 	})
 </script>
 
