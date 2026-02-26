@@ -15,20 +15,45 @@
 			<HomeService ref="homeService" @close="closePopup" :initial-country="selectedCountry"
 				:all-countries="countryList"></HomeService>
 		</uni-popup>
+		<CustomTabBar v-if="showCustomTabBar" :current="2" />
 	</view>
 </template>
 
 <script>
 	import HomeService from '@/pages/Home/Component/Home_Service.vue'
+	import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
+	import { shouldUseCustomTabBar } from '@/utils/app.js'
 	import UniPopup from '@/uni_modules/uni-popup/components/uni-popup/uni-popup.vue'
 	import {
 		getCountryList
 	} from '@/api/country.js'
+	import { useShare } from '@/mixins/useShare.js'
 
 	export default {
 		components: {
+			CustomTabBar,
 			HomeService,
 			UniPopup
+		},
+		setup() {
+			const { shareAppMessage, shareTimeline } = useShare({
+				title: '海丝出海通'
+			})
+			return {
+				shareAppMessage,
+				shareTimeline
+			}
+		},
+		onShareAppMessage(res) {
+			return this.shareAppMessage(res)
+		},
+		onShareTimeline(res) {
+			return this.shareTimeline(res)
+		},
+		computed: {
+			showCustomTabBar() {
+				return shouldUseCustomTabBar()
+			}
 		},
 		data() {
 			return {

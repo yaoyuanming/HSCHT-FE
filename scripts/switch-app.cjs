@@ -3,7 +3,7 @@ const path = require('path');
 
 const app = process.argv[2];
 if (!app) {
-  console.error('Missing app name. Usage: node scripts/switch-app.cjs <app1|app2>');
+  console.error('Missing app name. Usage: node scripts/switch-app.cjs <app1|app2|app3>');
   process.exit(1);
 }
 

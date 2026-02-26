@@ -155,9 +155,8 @@ const loadDetail = async (id) => {
 }
 
 const handlePrimaryAction = async () => {
-	uni.showToast({
-		title: '暂不支持报名/购买',
-		icon: 'none'
+	uni.navigateTo({
+		url: `/pages/Home/Component/consult?category=1&service=${encodeURIComponent(course.value?.activityName || '')}`
 	})
 }
 
