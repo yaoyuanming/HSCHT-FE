@@ -60,11 +60,27 @@
 		getGuideList,
 		getServiceTypeList
 	} from '@/api/service.js'
+	import { useShare } from '@/mixins/useShare.js'
 
 	export default {
 		components: {
 			CustomTabBar,
 			UniIcons
+		},
+		setup() {
+			const { shareAppMessage, shareTimeline } = useShare({
+				title: '海丝出海通'
+			})
+			return {
+				shareAppMessage,
+				shareTimeline
+			}
+		},
+		onShareAppMessage(res) {
+			return this.shareAppMessage(res)
+		},
+		onShareTimeline(res) {
+			return this.shareTimeline(res)
 		},
 		computed: {
 			showCustomTabBar() {

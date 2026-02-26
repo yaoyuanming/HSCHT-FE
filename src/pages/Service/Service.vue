@@ -27,12 +27,28 @@
 	import {
 		getCountryList
 	} from '@/api/country.js'
+	import { useShare } from '@/mixins/useShare.js'
 
 	export default {
 		components: {
 			CustomTabBar,
 			HomeService,
 			UniPopup
+		},
+		setup() {
+			const { shareAppMessage, shareTimeline } = useShare({
+				title: '海丝出海通'
+			})
+			return {
+				shareAppMessage,
+				shareTimeline
+			}
+		},
+		onShareAppMessage(res) {
+			return this.shareAppMessage(res)
+		},
+		onShareTimeline(res) {
+			return this.shareTimeline(res)
 		},
 		computed: {
 			showCustomTabBar() {

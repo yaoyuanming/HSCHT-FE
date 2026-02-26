@@ -175,11 +175,14 @@
 	} from 'vue'
 	import {
 		onShow,
-		onPullDownRefresh
+		onPullDownRefresh,
+		onShareAppMessage,
+		onShareTimeline
 	} from '@dcloudio/uni-app'
 	import {
 		handlePullDownRefresh
 	} from '@/utils/refresh.js'
+	import { useShare } from '@/mixins/useShare.js'
 	import {
 		getCountryList
 	} from '@/api/country.js'
@@ -204,6 +207,14 @@
 	const navBarHeight = ref(44)
 	const enableSearch = ref(false)
 	const showCustomTabBar = shouldUseCustomTabBar()
+
+	// 开启分享功能
+	const { shareAppMessage, shareTimeline } = useShare({
+		title: '海丝出海通'
+	})
+	
+	onShareAppMessage(shareAppMessage)
+	onShareTimeline(shareTimeline)
 
 	// 企业出海数量
 	const enterpriseCount = ref(20000)

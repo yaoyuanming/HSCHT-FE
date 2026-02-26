@@ -70,10 +70,19 @@
 	import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
 	import { shouldUseCustomTabBar } from '@/utils/app.js'
 	import { ref } from 'vue'
-	import { onLoad, onPullDownRefresh, onReachBottom, onShow } from '@dcloudio/uni-app'
+	import { onLoad, onPullDownRefresh, onReachBottom, onShow, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
 	import { getActivityList } from '@/api/activity'
+	import { useShare } from '@/mixins/useShare.js'
 
 	const showCustomTabBar = shouldUseCustomTabBar()
+	
+	// 开启分享功能
+	const { shareAppMessage, shareTimeline } = useShare({
+		title: '海丝出海通'
+	})
+	
+	onShareAppMessage(shareAppMessage)
+	onShareTimeline(shareTimeline)
 
 	// 响应式变量
 	const defaultCover = '/static/index/video.png'
