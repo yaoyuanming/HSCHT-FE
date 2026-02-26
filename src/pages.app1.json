@@ -58,6 +58,12 @@
 			}
 		},
 		{
+			"path": "pages/Home/Component/user_agreement",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/Home/Component/government",
 			"style": {
 				"navigationStyle": "custom"
@@ -121,6 +127,56 @@
 			"style": {
 				"navigationBarTitleText": "企业档案"
 			}
+		},
+		{
+			"path": "pages/My/asset/coupon/index",
+			"style": {
+				"navigationBarTitleText": "优惠券"
+			}
+		},
+		{
+			"path": "pages/My/asset/wallet/index",
+			"style": {
+				"navigationBarTitleText": "我的钱包",
+				"navigationBarBackgroundColor": "#1E88FF",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/Home/Analysis/chuhai",
+			"style": {
+				"navigationBarTitleText": "出海分析"
+			}
+		},
+		{
+			"path": "pages/Home/Analysis/history_report",
+			"style": {
+				"navigationBarTitleText": "历史报告",
+				"navigationBarBackgroundColor": "#1E88FF",
+				"navigationBarTextStyle": "white",
+				"enablePullDownRefresh": true,
+				"backgroundTextStyle": "dark"
+			}
+		},
+		{
+			"path": "pages/Home/Analysis/report_example",
+			"style": {
+				"navigationBarTitleText": "报告示例"
+			}
+		},
+		{
+			"path" : "pages/My/funtion/company_profile/add_company",
+			"style" : 
+			{
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path" : "pages/My/funtion/company_profile/compant_detail",
+			"style" : 
+			{
+				"navigationStyle": "custom"
+			}
 		}
 	],
 	"globalStyle": {
@@ -145,16 +201,16 @@
 				"text": "首页"
 			},
 			{
-				"pagePath": "pages/Service/Service",
-				"iconPath": "/static/nav/service.png",
-				"selectedIconPath": "/static/nav/service-active.png",
-				"text": "服务"
-			},
-			{
 				"pagePath": "pages/Course/Course",
 				"iconPath": "/static/nav/course.png",
 				"selectedIconPath": "/static/nav/course-active.png",
 				"text": "活动"
+			},
+			{
+				"pagePath": "pages/Service/Service",
+				"iconPath": "/static/nav/service.png",
+				"selectedIconPath": "/static/nav/service.png",
+				"text": "服务"
 			},
 			{
 				"pagePath": "pages/Guide/Guide",

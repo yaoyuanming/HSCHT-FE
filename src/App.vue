@@ -1,9 +1,15 @@
 <script>
 	import store from '@/store/index'
 	import { completeLoginFlow } from '@/utils/auth'
+	import { shouldUseCustomTabBar } from '@/utils/app.js'
 
 	export default {
 		onLaunch: async function() {
+			// 仅在 app1 时隐藏原生TabBar，因为只有 app1 使用了 CustomTabBar
+			if (shouldUseCustomTabBar()) {
+				uni.hideTabBar()
+			}
+			
 			console.warn('当前组件仅支持 uni_modules 目录结构 ，请升级 HBuilderX 到 3.1.0 版本以上！')
 			console.log('App Launch')
 			

@@ -18,15 +18,17 @@
 		</view>
 
 		<!-- 服务图标网格 -->
-		<view class="service-grid">
-			<view class="service-item" v-for="(item, index) in services" :key="index" @click="selectService(index)">
-				<view class="icon-box" :class="{ 'active-icon': currentService === index }">
-					<image class="service-icon" :src="item.iconUrl" mode="aspectFit" v-if="item.iconUrl"></image>
-					<uni-icons type="help" size="30" color="#666666" v-else></uni-icons>
+		<scroll-view scroll-y="true" class="service-grid-scroll">
+			<view class="service-grid">
+				<view class="service-item" v-for="(item, index) in services" :key="index" @click="selectService(index)">
+					<view class="icon-box" :class="{ 'active-icon': currentService === index }">
+						<image class="service-icon" :src="item.iconUrl" mode="aspectFit" v-if="item.iconUrl"></image>
+						<uni-icons type="help" size="30" color="#666666" v-else></uni-icons>
+					</view>
+					<text class="service-name">{{ item.typeName }}</text>
 				</view>
-				<text class="service-name">{{ item.typeName }}</text>
 			</view>
-		</view>
+		</scroll-view>
 
 		<!-- 底部详情列表 (使用scroll-view) -->
 		<scroll-view scroll-y="true" class="detail-list-scroll">
@@ -220,8 +222,21 @@
 				}
 			},
 			goToDetail(item) {
+				const id = item && (item.id || item.articleId);
+				if (!id) {
+					uni.showToast({
+						title: '未找到文章ID',
+						icon: 'none'
+					});
+					return;
+				}
+				const selectedService = this.currentService >= 0 ? this.services[this.currentService] : null
+				const serviceTypeId = (item && (item.servicesTypeId || item.serviceTypeId || item.typeId || item.services_type_id)) ||
+					(selectedService && (selectedService.serviceTypeId || selectedService.id || selectedService.typeId)) || ''
+				const serviceTypeName = (item && (item.serviceTypeName || item.servicesTypeName || item.typeName || item.services_type_name)) ||
+					(selectedService && (selectedService.typeName || selectedService.serviceTypeName)) || ''
 				uni.navigateTo({
-					url: `/pages/Service/funtion/detail?id=${item.id}`
+					url: `/pages/Service/funtion/detail?id=${encodeURIComponent(id)}&type=service&servicesTypeId=${encodeURIComponent(serviceTypeId)}&serviceTypeName=${encodeURIComponent(serviceTypeName)}`
 				});
 			}
 		}
@@ -307,11 +322,16 @@
 	}
 
 	/* Grid */
-	.service-grid {
+	.service-grid-scroll {
 		flex-shrink: 0;
+		height: 420rpx; /* 约两行的高度: 40(padding-top) + 140*2(item) + 40*2(margin) - adjustment */
+	}
+
+	.service-grid {
+		/* flex-shrink: 0; 移到 scroll-view 上 */
 		display: flex;
 		flex-wrap: wrap;
-		padding: 40rpx 20rpx;
+		padding: 40rpx 20rpx 0; /* 底部padding减少，由margin撑开 */
 	}
 
 	.service-item {
