@@ -1,50 +1,46 @@
 <template>
-	<view class="service-popup">
-		<!-- 头部 -->
-		<view class="popup-header">
-			<text class="popup-title">出海服务</text>
-			<view class="close-btn" @click="close">
-				<uni-icons type="closeempty" size="24" color="#ffffff"></uni-icons>
-			</view>
-		</view>
-
-		<!-- 区域Tab -->
-		<view class="region-tabs">
-			<view class="tab-item" :class="{ active: currentTab === index }" v-for="(item, index) in allCountries"
-				:key="index" @click="selectTab(index)">
-				<view class="tab-dot" :class="{ 'active-dot': currentTab === index }"></view>
-				<text class="tab-text">{{ item.countryName }}</text>
-			</view>
-		</view>
-
-		<!-- 服务图标网格 -->
-		<scroll-view scroll-y="true" class="service-grid-scroll">
-			<view class="service-grid">
-				<view class="service-item" v-for="(item, index) in services" :key="index" @click="selectService(index)">
-					<view class="icon-box" :class="{ 'active-icon': currentService === index }">
-						<image class="service-icon" :src="item.iconUrl" mode="aspectFit" v-if="item.iconUrl"></image>
-						<uni-icons type="help" size="30" color="#666666" v-else></uni-icons>
-					</view>
-					<text class="service-name">{{ item.typeName }}</text>
+	<view class="container">
+		<!-- 页面内容区域 -->
+		<view class="page-content">
+			<!-- 服务图标 Swiper -->
+			<view class="swiper-container">
+				<swiper class="service-swiper" :indicator-dots="false" @change="onSwiperChange">
+					<swiper-item v-for="(page, pageIndex) in servicePages" :key="pageIndex">
+						<view class="service-grid">
+							<view class="service-item" v-for="(item, index) in page" :key="index" @click="selectService(item)">
+								<view class="icon-box" :class="{ 'active-icon': currentServiceId === (item.serviceTypeId || item.id) }">
+									<image class="service-icon" :src="item.iconUrl" mode="aspectFit" v-if="item.iconUrl"></image>
+									<uni-icons type="help" size="30" color="#1e90ff" v-else></uni-icons>
+								</view>
+								<text class="service-name">{{ item.typeName }}</text>
+							</view>
+						</view>
+					</swiper-item>
+				</swiper>
+				<!-- 自定义指示点 -->
+				<view class="swiper-dots" v-if="servicePages.length > 1">
+					<view class="dot" v-for="(page, index) in servicePages" :key="index"
+						:class="{ active: currentSwiperIndex === index }"></view>
 				</view>
 			</view>
-		</scroll-view>
 
-		<!-- 底部详情列表 (使用scroll-view) -->
-		<scroll-view scroll-y="true" class="detail-list-scroll">
-			<block v-if="articles && articles.length > 0">
-				<view class="detail-list">
-					<view class="detail-item" v-for="(item, index) in articles" :key="index" @click="goToDetail(item)">
+			<!-- 详情列表 -->
+			<view class="detail-list-container">
+				<view class="detail-list" v-if="articles && articles.length > 0">
+					<view class="detail-card" v-for="(item, index) in articles" :key="index" @click="goToDetail(item)">
 						<image class="detail-img" :src="item.articleImageUrl" mode="aspectFill"></image>
-						<text class="detail-title">{{ item.articleName }}</text>
+						<view class="detail-content">
+							<text class="detail-title">{{ item.articleName }}</text>
+							<text class="detail-desc">{{ stripHtml(item.content) || '暂无内容' }}</text>
+						</view>
 					</view>
 				</view>
-			</block>
-			<view class="empty-state" v-else>
-				<uni-icons type="info" size="60" color="#e0e0e0"></uni-icons>
-				<text class="empty-text">暂无相关服务</text>
+				<view class="empty-state" v-else>
+					<uni-icons type="info" size="60" color="#e0e0e0"></uni-icons>
+					<text class="empty-text">暂无相关服务</text>
+				</view>
 			</view>
-		</scroll-view>
+		</view>
 	</view>
 </template>
 
@@ -54,323 +50,211 @@
 		getServiceTypeList,
 		getServiceArticleList
 	} from '@/api/service.js'
+	import {
+		getCountryList
+	} from '@/api/country.js'
 
 	export default {
 		components: {
 			UniIcons
 		},
-		props: {
-			initialCountry: {
-				type: Object,
-				default: () => ({})
-			},
-			allCountries: {
-				type: Array,
-				default: () => []
-			}
-		},
 		data() {
 			return {
-				currentTab: 0,
-				currentService: -1,
-				services: [],
+				statusBarHeight: 20,
+				countryId: '',
+				currentCountryName: '',
+				allCountries: [],
+				services: [], // 所有服务类型
 				articles: [],
+				currentServiceId: -1,
+				currentSwiperIndex: 0
 			}
 		},
-		watch: {
-			allCountries: {
-				handler(newVal) {
-					// 
-				},
-				immediate: true
-			},
-			initialCountry: {
-				handler(newVal) {
-					this.initDataByCountry(newVal)
-				},
-				immediate: true,
-				deep: true
+		computed: {
+			// 将服务类型分页，每页8个 (4列 x 2行)
+			servicePages() {
+				const pageSize = 8;
+				const pages = [];
+				for (let i = 0; i < this.services.length; i += pageSize) {
+					pages.push(this.services.slice(i, i + pageSize));
+				}
+				return pages;
 			}
 		},
-		mounted() {
-			// 如果有初始国家，watch 会处理；如果没有，可以加载默认数据
-			if (!this.initialCountry || !this.initialCountry.id) {
-				this.fetchServiceTypes()
+		onLoad(options) {
+			const sysInfo = uni.getSystemInfoSync();
+			this.statusBarHeight = sysInfo.statusBarHeight;
+
+			if (options.countryId) {
+				this.countryId = options.countryId;
+				this.currentCountryName = decodeURIComponent(options.countryName || '');
+				
+				// 设置导航栏标题
+				uni.setNavigationBarTitle({
+					title: this.currentCountryName
+				});
+				
+				this.fetchServiceTypes({
+					countryId: this.countryId
+				});
+				// 默认加载全部文章
+				this.fetchArticles({
+					countryId: this.countryId
+				});
 			}
+			
+			// 也可以获取国家列表以备用
+			this.fetchCountryList();
 		},
 		methods: {
-			/**
-			 * 基于ID关联的多级数据筛选方法
-			 * 输入：国家对象 (包含 id, continent)
-			 * 逻辑：
-			 * 1. 确定所属洲 -> 切换Tab
-			 * 2. 筛选服务类型 -> fetchServiceTypes({ countryId })
-			 * 3. 筛选文章 -> selectService(0) -> fetchArticles({ servicesTypeId })
-			 */
-			initDataByCountry(country) {
-				if (!country || !country.id) return
-
-				// 1. 根据 country.id 自动选中对应Tab
-				if (this.allCountries && this.allCountries.length > 0) {
-					const index = this.allCountries.findIndex(item => item.id === country.id)
-					if (index !== -1) {
-						this.currentTab = index
-					}
+			goBack() {
+				uni.navigateBack();
+			},
+			async fetchCountryList() {
+				try {
+					const res = await getCountryList();
+					this.allCountries = res.data || [];
+				} catch (e) {
+					console.error('获取国家列表失败', e);
 				}
-
-				// 2. 根据 countryId 筛选服务类型
-				this.fetchServiceTypes({
-					countryId: country.id
-				})
 			},
 			async fetchServiceTypes(params = {}) {
 				try {
-					// 重置选中状态
-					this.currentService = -1
-					this.services = []
-					this.articles = []
+					const res = await getServiceTypeList(params);
+					let list = res.data?.rows || res.rows || res.data || [];
 					
-					const res = await getServiceTypeList(params)
-					let list = res.data?.rows || res.rows || res.data || []
-					
-					// 前端二次筛选：确保只显示当前国家的服务类型
+					// 过滤当前国家的服务
 					if (params.countryId) {
 						list = list.filter(item => {
-							// 兼容 countryId 和 country_id
-							const itemCountryId = item.countryId !== undefined ? item.countryId : item.country_id
-							// 如果服务类型有国家ID，必须匹配；如果没有国家ID，可能是通用服务，保留
+							const itemCountryId = item.countryId !== undefined ? item.countryId : item.country_id;
 							if (itemCountryId !== undefined && itemCountryId !== null) {
-								return itemCountryId == params.countryId
+								return itemCountryId == params.countryId;
 							}
-							return true
-						})
+							return true;
+						});
 					}
-					
-					this.services = list
-					
-					// 默认不选中服务，直接加载该国家的所有文章
-					if (params.countryId) {
-						this.fetchArticles({
-							countryId: params.countryId
-						})
-					}
+					this.services = list;
 				} catch (e) {
-					console.error('获取服务类型失败', e)
+					console.error('获取服务类型失败', e);
 				}
 			},
 			async fetchArticles(params = {}) {
 				try {
 					uni.showLoading({
 						title: '加载中...'
-					})
-					const res = await getServiceArticleList(params)
-					let list = res.data?.rows || res.rows || res.data || []
-					// 过滤未发布的文章 (status: 0 草稿, 1 已发布)
-					this.articles = list.filter(item => item.status == 1)
+					});
+					const res = await getServiceArticleList(params);
+					let list = res.data?.rows || res.rows || res.data || [];
+					this.articles = list.filter(item => item.status == 1);
 				} catch (e) {
-					console.error('获取文章列表失败', e)
+					console.error('获取文章列表失败', e);
 				} finally {
-					uni.hideLoading()
+					uni.hideLoading();
 				}
 			},
-			close() {
-				this.$emit('close');
+			onSwiperChange(e) {
+				this.currentSwiperIndex = e.detail.current;
 			},
-			selectTab(index) {
-				this.currentTab = index;
-				const country = this.allCountries[index];
-				if (country) {
-					this.fetchServiceTypes({
-						countryId: country.id
-					})
-				}
-			},
-			selectService(index) {
-				// 如果点击已选中的服务，则取消选中并显示全部
-				if (this.currentService === index) {
-					this.currentService = -1;
-					const country = this.allCountries[this.currentTab];
-					if (country) {
-						this.fetchArticles({
-							countryId: country.id
-						})
-					}
-					return;
-				}
-
-				this.currentService = index;
-				const service = this.services[index];
-				// console.log('Selected service:', service)
-				if (service) {
-					// 尝试获取 ID，优先 serviceTypeId，其次 id
-					const id = service.serviceTypeId || service.id || service.typeId
-					// console.log('Using Type ID:', id)
-					
-					if (!id) {
-						console.warn('未找到服务类型ID', service)
-						return
-					}
-
-					// 先清空列表，给予视觉反馈
-					this.articles = []
-					
-					// 使用 servicesTypeId 作为参数名，并再次确认
-					console.log('Fetching articles for servicesTypeId:', id)
+			selectService(item) {
+				const id = item.serviceTypeId || item.id || item.typeId;
+				
+				// 如果点击已选中的，取消选中
+				if (this.currentServiceId === id) {
+					this.currentServiceId = -1;
+					// 加载该国家所有文章
 					this.fetchArticles({
-						servicesTypeId: id
-					})
-				}
-			},
-			goToDetail(item) {
-				const id = item && (item.id || item.articleId);
-				if (!id) {
-					uni.showToast({
-						title: '未找到文章ID',
-						icon: 'none'
+						countryId: this.countryId
 					});
 					return;
 				}
-				const selectedService = this.currentService >= 0 ? this.services[this.currentService] : null
-				const serviceTypeId = (item && (item.servicesTypeId || item.serviceTypeId || item.typeId || item.services_type_id)) ||
-					(selectedService && (selectedService.serviceTypeId || selectedService.id || selectedService.typeId)) || ''
-				const serviceTypeName = (item && (item.serviceTypeName || item.servicesTypeName || item.typeName || item.services_type_name)) ||
-					(selectedService && (selectedService.typeName || selectedService.serviceTypeName)) || ''
+
+				this.currentServiceId = id;
+				// 加载特定类型的文章
+				this.fetchArticles({
+					servicesTypeId: id
+				});
+			},
+			goToDetail(item) {
+				const id = item && (item.id || item.articleId);
+				if (!id) return;
+				
+				const selectedService = this.services.find(s => (s.serviceTypeId || s.id) == this.currentServiceId);
+				
+				const serviceTypeId = (item && (item.servicesTypeId || item.serviceTypeId || item.typeId)) ||
+					(selectedService && (selectedService.serviceTypeId || selectedService.id)) || '';
+				const serviceTypeName = (item && (item.serviceTypeName || item.typeName)) ||
+					(selectedService && (selectedService.typeName)) || '';
+					
 				uni.navigateTo({
 					url: `/pages/Service/funtion/detail?id=${encodeURIComponent(id)}&type=service&servicesTypeId=${encodeURIComponent(serviceTypeId)}&serviceTypeName=${encodeURIComponent(serviceTypeName)}`
 				});
+			},
+			stripHtml(html) {
+				if (!html) return '';
+				return html.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ');
 			}
 		}
 	}
 </script>
 
-<style lang="scss">
-	.service-popup {
+<style lang="scss" scoped>
+	.container {
+		min-height: 100vh;
+		background-color: #f5f7fa;
+	}
+
+	/* 页面内容 */
+	.page-content {
+		padding-bottom: 30px;
+	}
+
+	/* Swiper */
+	.swiper-container {
 		background-color: #ffffff;
-		border-top-left-radius: 24rpx;
-		border-top-right-radius: 24rpx;
-		overflow: hidden;
-		/* 固定高度，使用 flex 布局 */
-		height: 80vh;
-		display: flex;
-		flex-direction: column;
-		/* 移除之前的 padding-bottom，因为 scroll-view 内部处理 */
-		padding-bottom: constant(safe-area-inset-bottom);
-		padding-bottom: env(safe-area-inset-bottom);
+		padding: 20rpx 0;
+		margin-bottom: 20rpx;
 	}
 
-	.popup-header {
-		/* 固定头部 */
-		flex-shrink: 0;
-		background-color: #1e90ff;
-		padding: 30rpx;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
-
-	.popup-title {
-		color: #ffffff;
-		font-size: 34rpx;
-		font-weight: bold;
-	}
-
-	.close-btn {
-		padding: 10rpx;
-	}
-
-	/* Tabs */
-	.region-tabs {
-		flex-shrink: 0;
-		display: flex;
-		background-color: #f5f5f5;
-		padding: 20rpx 30rpx;
-		overflow-x: auto; /* 允许横向滚动 */
-		white-space: nowrap;
-	}
-
-	.tab-item {
-		display: flex;
-		align-items: center;
-		padding: 12rpx 30rpx;
-		border-radius: 30rpx;
-		margin-right: 20rpx;
-		transition: all 0.3s;
-		flex-shrink: 0;
-	}
-
-	.tab-item.active {
-		background-color: #ffffff;
-		box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
-	}
-
-	.tab-dot {
-		width: 24rpx;
-		height: 24rpx;
-		border-radius: 50%;
-		background-color: #cccccc;
-		margin-right: 10rpx;
-	}
-
-	.tab-dot.active-dot {
-		background-color: #1e90ff;
-		/* 选中时的蓝色 */
-	}
-
-	.tab-text {
-		font-size: 28rpx;
-		color: #333333;
-	}
-
-	/* Grid */
-	.service-grid-scroll {
-		flex-shrink: 0;
-		height: 420rpx; /* 约两行的高度: 40(padding-top) + 140*2(item) + 40*2(margin) - adjustment */
+	.service-swiper {
+		height: 380rpx; /* 2行的高度 */
 	}
 
 	.service-grid {
-		/* flex-shrink: 0; 移到 scroll-view 上 */
 		display: flex;
 		flex-wrap: wrap;
-		padding: 40rpx 20rpx 0; /* 底部padding减少，由margin撑开 */
+		padding: 0 20rpx;
 	}
 
 	.service-item {
 		width: 25%;
-		/* 4列 */
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		margin-bottom: 40rpx;
+		margin-bottom: 30rpx;
 	}
 
 	.icon-box {
 		width: 100rpx;
 		height: 100rpx;
 		border-radius: 50%;
-		border: 2rpx solid #eeeeee;
+		border: 1px solid #eeeeee;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		margin-bottom: 16rpx;
 		transition: all 0.3s;
-		overflow: hidden; 
+		background-color: #ffffff;
+	}
+	
+	.icon-box.active-icon {
+		border-color: #1e90ff;
+		background-color: rgba(30, 144, 255, 0.1);
 	}
 
 	.service-icon {
-		width: 60%;
-		height: 60%;
+		width: 50%;
+		height: 50%;
 	}
-
-	.icon-box.active-icon {
-		background-color: #8bbdf9;
-		/* 浅蓝色背景 */
-		border-color: #1e90ff;
-		/* 这里的颜色需要根据图调整，图中是蓝色背景 */
-		background-color: rgba(30, 144, 255, 0.2);
-		border: 2rpx solid #1e90ff;
-	}
-
-	/* 选中时图标颜色在template中通过props控制 */
 
 	.service-name {
 		font-size: 24rpx;
@@ -378,46 +262,87 @@
 		text-align: center;
 	}
 
-	/* 底部列表 */
-	.detail-list-scroll {
-		flex: 1;
-		height: 0;
-		/* 配合flex:1 撑开 */
-		overflow: hidden;
-	}
-
-	.detail-list {
-		padding: 0 30rpx;
-		border-top: 2rpx solid #f0f0f0;
-		padding-top: 30rpx;
-		padding-bottom: 100rpx;
-		/* 增加底部留白，防止内容被遮挡 */
-	}
-
-	.detail-item {
+	/* Swiper Dots */
+	.swiper-dots {
 		display: flex;
+		justify-content: center;
 		align-items: center;
-		margin-bottom: 30rpx;
-		/* 增加列表项间距 */
+		margin-top: 10rpx;
+	}
+
+	.swiper-dots .dot {
+		width: 12rpx;
+		height: 12rpx;
+		background-color: #e0e0e0;
+		border-radius: 50%;
+		margin: 0 6rpx;
+		transition: all 0.3s;
+	}
+
+	.swiper-dots .dot.active {
+		background-color: #1e90ff;
+		width: 12rpx; 
+	}
+
+	/* 列表样式 */
+	.detail-list-container {
+		padding: 0 20rpx;
+	}
+
+	.detail-card {
+		background-color: #ffffff;
+		border-radius: 16rpx;
+		padding: 20rpx;
+		margin-bottom: 20rpx;
+		display: flex;
+		align-items: flex-start;
+		box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.02);
 	}
 
 	.detail-img {
-		width: 120rpx;
-		height: 120rpx;
+		width: 160rpx;
+		height: 160rpx;
 		border-radius: 12rpx;
+		background-color: #f0f0f0;
+		flex-shrink: 0;
 		margin-right: 20rpx;
+	}
+
+	.detail-content {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		height: 160rpx;
 	}
 
 	.detail-title {
 		font-size: 30rpx;
+		font-weight: bold;
 		color: #333333;
+		margin-bottom: 10rpx;
+		/* 最多两行 */
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 1;
+		overflow: hidden;
+	}
+
+	.detail-desc {
+		font-size: 24rpx;
+		color: #999999;
+		line-height: 1.5;
+		/* 最多三行 */
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 3;
+		overflow: hidden;
 	}
 	
 	.empty-state {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: center;
 		padding-top: 100rpx;
 	}
 	

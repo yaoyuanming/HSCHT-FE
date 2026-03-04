@@ -11,6 +11,36 @@
 				<view class="empty-tip">未找到课程信息</view>
 			</view>
 			<view v-else class="content">
+				<view class="media-wrapper">
+					<template v-if="course.contentUrl">
+						<!-- #ifdef MP-WEIXIN -->
+						<video
+							:src="course.contentUrl"
+							controls
+							:show-center-play-btn="true"
+							:show-play-btn="true"
+							:show-fullscreen-btn="true"
+							:show-progress="true"
+							:enable-progress-gesture="true"
+							object-fit="contain"
+							class="media-player video-player"
+						></video>
+						<!-- #endif -->
+						<!-- #ifndef MP-WEIXIN -->
+						<hic-video-player
+							:src="course.contentUrl"
+							:controls="true"
+							width="100%"
+							class="media-player video-player"
+						></hic-video-player>
+						<!-- #endif -->
+					</template>
+
+					<template v-else>
+						<image :src="course.activityImageUrl || defaultCover" mode="aspectFill" class="media-player" />
+					</template>
+				</view>
+
 				<view class="top-card">
 					<view class="top-card-body">
 						<view class="top-card-title">
@@ -34,36 +64,6 @@
 								</text>
 							</view>
 						</view>
-					</view>
-
-					<view class="media-wrapper">
-						<template v-if="course.contentUrl">
-							<!-- #ifdef MP-WEIXIN -->
-							<video
-								:src="course.contentUrl"
-								controls
-								:show-center-play-btn="true"
-								:show-play-btn="true"
-								:show-fullscreen-btn="true"
-								:show-progress="true"
-								:enable-progress-gesture="true"
-								object-fit="contain"
-								class="media-player video-player"
-							></video>
-							<!-- #endif -->
-							<!-- #ifndef MP-WEIXIN -->
-							<hic-video-player
-								:src="course.contentUrl"
-								:controls="true"
-								width="100%"
-								class="media-player video-player"
-							></hic-video-player>
-							<!-- #endif -->
-						</template>
-
-						<template v-else>
-							<image :src="course.activityImageUrl || defaultCover" mode="aspectFill" class="media-player" />
-						</template>
 					</view>
 				</view>
 
@@ -149,6 +149,12 @@ const loadDetail = async (id) => {
 		}
 		const res = await getActivityDetail(id)
 		course.value = res?.data || null
+		
+		if (course.value?.activityName) {
+			uni.setNavigationBarTitle({
+				title: course.value.activityName
+			})
+		}
 	} finally {
 		loading.value = false
 	}
@@ -292,8 +298,9 @@ page {
 
 .media-wrapper {
 	position: relative;
-	width: 100%;
-	padding-bottom: 42.86%;
+	width: calc(100% + 48rpx);
+	margin: -24rpx -24rpx 24rpx -24rpx;
+	padding-bottom: 56.25%; /* 16:9 ratio for better video/image display */
 	overflow: hidden;
 }
 

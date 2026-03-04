@@ -58,10 +58,10 @@
 						text: "首页"
 					},
 					{
-						pagePath: "/pages/Course/Course",
+						pagePath: "/pages/Business/purchaser",
 						iconPath: "/static/nav/course.png",
 						selectedIconPath: "/static/nav/course-active.png",
-						text: "活动"
+						text: "商业"
 					},
 					{
 						pagePath: "/pages/Service/Service",

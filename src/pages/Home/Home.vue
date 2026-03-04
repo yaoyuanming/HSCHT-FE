@@ -159,10 +159,8 @@
 		</view>
 
 		<!-- 底部弹窗 -->
-		<uni-popup ref="popup" type="bottom" :safe-area="false">
-			<HomeService ref="homeService" @close="closePopup" :initial-country="selectedCountry"
-				:all-countries="allCountries"></HomeService>
-		</uni-popup>
+		<!-- <uni-popup ref="popup" type="bottom" :safe-area="false">
+		</uni-popup> -->
 		<CustomTabBar v-if="showCustomTabBar" :current="0" />
 	</view>
 </template>
@@ -186,6 +184,7 @@
 	import {
 		getCountryList
 	} from '@/api/country.js'
+	import { governmentServices } from '@/api/home/government.js'
 	import {
 		getActivityList
 	} from '@/api/activity/index.js'
@@ -196,10 +195,10 @@
 		getUserList,
 		getUserCount
 	} from '@/api/home/index.js'
-	import HomeService from './Component/Home_Service.vue'
+	// import HomeService from './Component/Home_Service.vue'
 	import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
 	import { shouldUseCustomTabBar } from '@/utils/app.js'
-	import UniPopup from '@/uni_modules/uni-popup/components/uni-popup/uni-popup.vue'
+	// import UniPopup from '@/uni_modules/uni-popup/components/uni-popup/uni-popup.vue'
 	import UniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue'
 
 	// 系统信息
@@ -254,80 +253,7 @@
 	const selectedCountry = ref({})
 
 	// 境内服务数据 (来自 government.vue)
-	const domesticServices = ref([{
-			title: '出口贸易服务',
-			items: [
-				// {
-				// 	name: '报关报检服务',
-				// 	icon: 'checkbox-filled',
-				// 	color: '#1e90ff'
-				// },
-				{
-					name: '国际物流安排',
-					icon: 'paperplane-filled',
-					color: '#1e90ff'
-				},
-				// {
-				// 	name: '外汇结算服务',
-				// 	icon: 'wallet-filled',
-				// 	color: '#1e90ff'
-				// },
-				// {
-				// 	name: '出口退税办理',
-				// 	icon: 'compose',
-				// 	color: '#1e90ff'
-				// }
-			]
-		},
-		{
-			title: '境外投资服务',
-			items: [{
-					name: '投资环境评估',
-					icon: 'pyq',
-					color: '#1e90ff'
-				},
-				{
-					name: '项目可行性研究',
-					icon: 'list',
-					color: '#1e90ff'
-				},
-				{
-					name: '海外公司注册',
-					icon: 'shop-filled',
-					color: '#1e90ff'
-				},
-				{
-					name: '投资融资服务',
-					icon: 'vip-filled',
-					color: '#1e90ff'
-				}
-			]
-		},
-		{
-			title: '综合支持服务',
-			items: [{
-					name: '多语言翻译服务',
-					icon: 'chat-filled',
-					color: '#1e90ff'
-				},
-				{
-					name: '法律文书公证',
-					icon: 'folder-add-filled',
-					color: '#1e90ff'
-				},
-				{
-					name: '商务谈判支持',
-					icon: 'staff-filled',
-					color: '#1e90ff'
-				},
-				{
-					name: '市场调研报告',
-					icon: 'bars',
-					color: '#1e90ff'
-				}
-			]
-		}
-	])
+	const domesticServices = ref(governmentServices)
 
 
 	// 计算属性：将国家数据分页，每页8个
@@ -503,8 +429,10 @@
 	}
 
 	const handleCountry = (item) => {
-		selectedCountry.value = item
-		popup.value.open()
+		if (!item || !item.id) return
+		uni.navigateTo({
+			url: `/pages/Home/Component/Home_Service?countryId=${item.id}&countryName=${encodeURIComponent(item.countryName)}`
+		})
 	}
 	
 	const handleDomesticItem = (item) => {
