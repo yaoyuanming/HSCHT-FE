@@ -188,7 +188,7 @@
 			"path" : "pages/Business/purchaser",
 			"style" : 
 			{
-				"navigationBarTitleText" : "商业"
+				"navigationStyle": "custom"
 			}
 		}
 	],

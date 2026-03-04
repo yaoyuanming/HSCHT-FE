@@ -114,7 +114,7 @@
 			<view class="procurement-section">
 				<view class="section-header">
 					<text class="header-title">国际采购信息</text>
-					<view class="header-right">
+					<view class="header-right" @click="handleMoreProcurement">
 						<text class="more-text">更多</text>
 						<uni-icons type="right" size="14" color="#999999"></uni-icons>
 					</view>
@@ -386,6 +386,13 @@
 		} catch (e) {
 			console.error('获取国际采购信息失败', e)
 		}
+	}
+
+	const handleMoreProcurement = () => {
+		uni.setStorageSync('purchaserTab', 1)
+		uni.switchTab({
+			url: '/pages/Business/purchaser'
+		})
 	}
 
 	const handleProcurementImageError = (index) => {
