@@ -61,7 +61,8 @@ export default {
 		return {
 			purchaseList: [],
 			queryParams: {
-				pageNum: 1
+				pageNum: 1,
+				countryId: ''
 			}
 		}
 	},

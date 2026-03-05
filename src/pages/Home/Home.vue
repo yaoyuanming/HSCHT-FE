@@ -247,10 +247,7 @@
 	const currentTab = ref(0)
 
 	// 国家数据
-	const countries = ref([])
 	const allCountries = ref([])
-	const popup = ref(null)
-	const selectedCountry = ref({})
 
 	// 境内服务数据 (来自 government.vue)
 	const domesticServices = ref(governmentServices)
@@ -315,8 +312,6 @@
 					nationalFlagUrl: item.nationalFlagUrl ? (item.nationalFlagUrl.startsWith('http') ? item
 						.nationalFlagUrl : baseUrl + item.nationalFlagUrl) : ''
 				}))
-				// 注意：这里不再只取前8个，而是全部给 allCountries，由 countryPages 进行分页
-				countries.value = allCountries.value.slice(0, 8) // 保持兼容，虽然模板里改用了 countryPages
 			}
 		} catch (e) {
 			console.error('获取国家列表失败', e)
@@ -391,25 +386,14 @@
 	const handleMoreProcurement = () => {
 		uni.setStorageSync('purchaserTab', 1)
 		uni.switchTab({
-			url: '/pages/Business/purchaser'
+			url: '/pages/Business/business'
 		})
 	}
 
 	const handleProcurementImageError = (index) => {
-		if (!Array.isArray(procurementItems.value)) return
-		if (!procurementItems.value[index]) return
-		procurementItems.value[index].image = ''
-	}
-
-	// 活动图标背景色
-	const getIconBg = (index) => {
-		const colors = ['rgba(24, 144, 255, 0.1)', 'rgba(250, 140, 22, 0.1)', 'rgba(82, 196, 26, 0.1)']
-		return colors[index % colors.length]
-	}
-
-	const getIconColor = (index) => {
-		const colors = ['#1890ff', '#fa8c16', '#52c41a']
-		return colors[index % colors.length]
+		if (procurementItems.value[index]) {
+			procurementItems.value[index].image = ''
+		}
 	}
 
 	// 事件处理
@@ -457,10 +441,6 @@
 		}
 	}
 
-	const closePopup = () => {
-		popup.value.close()
-	}
-
 	const refreshHomeData = () => {
 		fetchCountryList()
 		fetchActivityList()
@@ -483,7 +463,6 @@
 
 	onMounted(() => {
 		initSystemInfo()
-		refreshHomeData()
 	})
 
 	onShow(() => {
@@ -625,18 +604,12 @@
 	.menu-icon-wrapper {
 		width: 90rpx;
 		height: 90rpx;
-		background-color: #f5f7fa;
-		/* 默认浅灰底，如果图片自带底色可去掉 */
+		background: transparent;
 		border-radius: 50%;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		margin-bottom: 16rpx;
-	}
-
-	/* 图片自带圆形底色的话，可以去掉 wrapper 背景 */
-	.menu-icon-wrapper {
-		background: transparent;
 	}
 
 	.menu-icon {

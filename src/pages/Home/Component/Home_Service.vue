@@ -1,5 +1,16 @@
 <template>
 	<view class="container">
+		<!-- 自定义导航栏 -->
+		<view class="custom-nav" :style="{ paddingTop: statusBarHeight + 'px' }">
+			<view class="nav-content">
+				<view class="nav-left" @click="goBack">
+					<uni-icons type="left" size="24" color="#333"></uni-icons>
+				</view>
+				<text class="nav-title">{{ currentCountryName }}</text>
+				<view class="nav-right"></view>
+			</view>
+		</view>
+
 		<!-- 页面内容区域 -->
 		<view class="page-content">
 			<!-- 服务图标 Swiper -->
@@ -88,11 +99,6 @@
 			if (options.countryId) {
 				this.countryId = options.countryId;
 				this.currentCountryName = decodeURIComponent(options.countryName || '');
-				
-				// 设置导航栏标题
-				uni.setNavigationBarTitle({
-					title: this.currentCountryName
-				});
 				
 				this.fetchServiceTypes({
 					countryId: this.countryId
@@ -201,6 +207,39 @@
 	.container {
 		min-height: 100vh;
 		background-color: #f5f7fa;
+	}
+
+	/* Custom Nav Bar */
+	.custom-nav {
+		background-color: #ffffff;
+		position: sticky;
+		top: 0;
+		z-index: 101;
+		border-bottom: 1rpx solid #f0f0f0;
+	}
+
+	.nav-content {
+		height: 44px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0 32rpx;
+	}
+
+	.nav-left {
+		width: 60rpx;
+		display: flex;
+		align-items: center;
+	}
+
+	.nav-title {
+		font-size: 34rpx;
+		font-weight: 600;
+		color: #333;
+	}
+
+	.nav-right {
+		width: 60rpx;
 	}
 
 	/* 页面内容 */

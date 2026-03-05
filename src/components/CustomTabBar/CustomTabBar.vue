@@ -58,7 +58,7 @@
 						text: "首页"
 					},
 					{
-						pagePath: "/pages/Business/purchaser",
+						pagePath: "/pages/Business/business",
 						iconPath: "/static/nav/course.png",
 						selectedIconPath: "/static/nav/course-active.png",
 						text: "商业"
