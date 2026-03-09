@@ -70,10 +70,10 @@
 						text: "服务"
 					},
 					{
-						pagePath: "/pages/Guide/Guide",
+						pagePath: "/pages/Youqi/youqi",
 						iconPath: "/static/nav/guide.png",
 						selectedIconPath: "/static/nav/guide-active.png",
-						text: "指南"
+						text: "优企"
 					},
 					{
 						pagePath: "/pages/My/My",

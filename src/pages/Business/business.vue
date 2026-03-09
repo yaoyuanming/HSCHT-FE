@@ -220,7 +220,7 @@ page {
 
 /* Custom Nav Bar */
 .custom-nav {
-	background-color: #3b71ff;
+	background: linear-gradient(180deg, #1890ff 0%, #3ca0ff 100%);
 	position: sticky;
 	top: 0;
 	z-index: 101;

@@ -45,13 +45,10 @@
 				</view>
 			</view>
 		</scroll-view>
-		<CustomTabBar v-if="showCustomTabBar" :current="3" />
 	</view>
 </template>
 
 <script>
-	import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
-	import { shouldUseCustomTabBar } from '@/utils/app.js'
 	import UniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue'
 	import {
 		getCountryList
@@ -64,7 +61,6 @@
 
 	export default {
 		components: {
-			CustomTabBar,
 			UniIcons
 		},
 		setup() {
@@ -81,11 +77,6 @@
 		},
 		onShareTimeline(res) {
 			return this.shareTimeline(res)
-		},
-		computed: {
-			showCustomTabBar() {
-				return shouldUseCustomTabBar()
-			}
 		},
 		data() {
 			return {

@@ -42,13 +42,14 @@
 			"path": "pages/Guide/Guide",
 			"style": {
 				"navigationStyle": "custom",
-				"navigationBarTitleText": "指南"
+				"navigationBarTitleText": "优品"
 			}
 		},
 		{
 			"path": "pages/My/My",
 			"style": {
-				"navigationBarTitleText": "我的"
+				"navigationStyle": "custom",
+				"navigationBarTextStyle": "white"
 			}
 		},
 		{
@@ -190,6 +191,14 @@
 			{
 				"navigationStyle": "custom"
 			}
+		},
+		{
+			"path" : "pages/Youqi/funtion/enterprise_detail",
+			"style" : 
+			{
+				"navigationStyle": "custom",
+				"navigationBarTitleText" : "企业优品详情"
+			}
 		}
 	],
 	"globalStyle": {
@@ -226,10 +235,10 @@
 				"text": "服务"
 			},
 			{
-				"pagePath": "pages/Guide/Guide",
+				"pagePath": "pages/Youqi/youqi",
 				"iconPath": "/static/nav/guide.png",
 				"selectedIconPath": "/static/nav/guide-active.png",
-				"text": "指南"
+				"text": "优企"
 			},
 			{
 				"pagePath": "pages/My/My",

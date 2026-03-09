@@ -1,9 +1,7 @@
 <template>
 	<view class="container">
 		<!-- 自定义头部 (导航栏 + 选项卡) -->
-		<view class="header-container">
-			<!-- 状态栏占位 -->
-			<view :style="{ height: statusBarHeight + 'px', backgroundColor: '#1e90ff' }"></view>
+		<view class="header-container" :style="{ paddingTop: statusBarHeight + 'px' }">
 			<!-- 导航栏 -->
 			<view class="nav-bar">
 				<text class="nav-title">服务</text>
@@ -23,8 +21,19 @@
 			</view>
 		</view>
 
+		<!-- 加载状态页面 -->
+		<u-loading-page
+			:loading="loading"
+			loading-text="正在为您加载数据..."
+			loading-mode="circle"
+			font-size="14"
+			icon-size="30"
+			color="#3b71ff"
+			bg-color="rgba(255, 255, 255, 0.8)"
+		></u-loading-page>
+
 		<!-- 内容区域 (也就是主体部分，需要有 padding-top 避开头部) -->
-		<view class="content-area" :style="{ paddingTop: (statusBarHeight + 44 + 44) + 'px' }">
+		<view class="content-area" :style="{ paddingTop: 'calc(' + (statusBarHeight + 44) + 'px + 88rpx)' }">
 			<!-- 境外服务 (原内容) -->
 			<view v-if="currentTab === 0" class="country-grid">
 				<view class="country-item" v-for="(item, index) in countryList" :key="index" @click="goToService(item)">
@@ -82,6 +91,8 @@
 	const countryList = ref([])
 	const selectedCountry = ref({})
 	const courseRef = ref(null)
+	const loading = ref(false)
+	const initialized = ref({ 0: false, 1: false, 2: false, 3: false })
 
 	const showCustomTabBar = computed(() => shouldUseCustomTabBar())
 
@@ -109,16 +120,52 @@
 		}
 	})
 
-	const switchTab = (index) => {
+	const switchTab = async (index) => {
 		currentTab.value = index;
+		
+		// If tab is not initialized, show loading and fetch data
+		if (!initialized.value[index]) {
+			if (index === 0) {
+				await fetchCountryList();
+			} else if (index === 2) {
+				// For component based tabs, give a tick for ref to be available
+				loading.value = true;
+				try {
+					await new Promise(resolve => {
+						setTimeout(async () => {
+							if (courseRef.value) {
+								await courseRef.value.loadCourses(true, true);
+							}
+							resolve();
+						}, 100);
+					});
+					initialized.value[index] = true;
+				} catch (e) {
+					console.error('加载课程失败', e);
+				} finally {
+					loading.value = false;
+				}
+			} else {
+				// Mark as initialized for other tabs (like tab 1 or 3 which might be simple or pending)
+				initialized.value[index] = true;
+			}
+		}
 	}
 
 	const fetchCountryList = async () => {
+		// Only show full screen loading if not initialized
+		if (!initialized.value[0]) {
+			loading.value = true;
+		}
+		
 		try {
 			const res = await getCountryList()
 			countryList.value = res.data?.rows || res.rows || res.data || []
+			initialized.value[0] = true;
 		} catch (e) {
 			console.error('获取国家列表失败', e)
+		} finally {
+			loading.value = false;
 		}
 	}
 
@@ -143,30 +190,31 @@
 		left: 0;
 		width: 100%;
 		z-index: 999;
-		background-color: #ffffff;
+		background: linear-gradient(180deg, #1890ff 0%, #3ca0ff 100%);
 	}
 
 	/* 导航栏 */
 	.nav-bar {
 		height: 44px;
-		background-color: #1e90ff;
+		background: transparent;
 		display: flex;
 		align-items: center;
-		padding-left: 15px;
+		padding-left: 32rpx;
 	}
 
 	.nav-title {
 		color: #ffffff;
-		font-size: 18px;
-		font-weight: 500;
+		font-size: 36rpx;
+		font-weight: 600;
 	}
 
 	/* 选项卡 */
 	.tabs-container {
-		height: 44px;
+		height: 88rpx;
 		display: flex;
 		background-color: #ffffff;
 		border-bottom: 1px solid #eeeeee;
+		padding: 0 32rpx;
 	}
 
 	.tab-item {
@@ -179,23 +227,24 @@
 	}
 
 	.tab-text {
-		font-size: 14px;
+		font-size: 30rpx;
 		color: #666666;
 		transition: color 0.3s;
 	}
 
 	.tab-item.active .tab-text {
-		color: #1e90ff;
-		font-weight: bold;
+		color: #3b71ff;
+		font-weight: 600;
+		font-size: 32rpx;
 	}
 
 	.tab-line {
 		position: absolute;
 		bottom: 0;
-		width: 30px;
-		height: 3px;
-		background-color: #1e90ff;
-		border-radius: 3px;
+		width: 80rpx;
+		height: 6rpx;
+		background-color: #3b71ff;
+		border-radius: 3rpx;
 	}
 
 	/* 内容区域 */
