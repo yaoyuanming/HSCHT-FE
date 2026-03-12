@@ -13,9 +13,22 @@
 
 export default {
 	data() {
+		// 获取小程序名称作为默认分享标题
+		let defaultTitle = '海丝出海通';
+		// #ifdef MP-WEIXIN
+		try {
+			const accountInfo = uni.getAccountInfoSync();
+			if (accountInfo && accountInfo.miniProgram && accountInfo.miniProgram.name) {
+				defaultTitle = accountInfo.miniProgram.name;
+			}
+		} catch (e) {
+			console.error('获取小程序名称失败:', e);
+		}
+		// #endif
+
 		return {
 			// 设置默认的分享参数
-			shareTitle: '海丝出海通', // 默认为小程序名称
+			shareTitle: defaultTitle, 
 			sharePath: '', // 默认为当前页面路径
 			shareImageUrl: '' // 默认为当前页面截图
 		}

@@ -70,7 +70,8 @@ const tabPages = new Set([
 	'pages/Homeconfig/Homeconfig',
 	'pages/project/index',
 	'pages/Curriculum/index',
-	'pages/My/My'
+	'pages/My/My',
+	'pages/Myconfig/Myconfig'
 ])
 
 const normalizePagePath = (url = '') => {
@@ -91,7 +92,7 @@ const navigateByUrl = (url) => {
 	}
 
 	uni.navigateTo({
-		url
+		url: url.startsWith('/') ? url : `/${url}`
 	})
 }
 

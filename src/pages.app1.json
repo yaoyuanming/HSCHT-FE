@@ -199,6 +199,14 @@
 				"navigationStyle": "custom",
 				"navigationBarTitleText" : "企业优品详情"
 			}
+		},
+		{
+			"path" : "pages/Youqi/youqi",
+			"style" : 
+			{
+				"navigationStyle": "custom",
+				"navigationBarTitleText" : "优企"
+			}
 		}
 	],
 	"globalStyle": {

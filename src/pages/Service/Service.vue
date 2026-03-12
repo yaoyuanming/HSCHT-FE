@@ -67,7 +67,7 @@
 
 <script setup>
 	import { ref, computed, onMounted } from 'vue'
-	import { onLoad, onShareAppMessage, onShareTimeline, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
+	import { onLoad, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
 	import GovernmentService from '@/pages/Home/Component/government.vue'
 	import CourseList from '@/pages/Course/components/CourseList.vue'
 	import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
@@ -76,14 +76,6 @@
 	import {
 		getCountryList
 	} from '@/api/country.js'
-	import { useShare } from '@/mixins/useShare.js'
-
-	const { shareAppMessage, shareTimeline } = useShare({
-		title: '海丝出海通'
-	})
-	
-	onShareAppMessage(shareAppMessage)
-	onShareTimeline(shareTimeline)
 
 	const statusBarHeight = ref(20)
 	const currentTab = ref(0)

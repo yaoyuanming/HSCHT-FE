@@ -225,14 +225,17 @@
 						status: 0, // 0:待处理
 						assignTenantId: utilsConfig.tenantId // 传递租户ID
 					}
+
+					// 始终尝试传递 servicesTypeId，无论 category 是多少
+					if (this.serviceTypeId !== undefined && this.serviceTypeId !== null && String(this.serviceTypeId) !== '') {
+						const rawId = String(this.serviceTypeId)
+						const shouldCastToNumber = /^\d+$/.test(rawId) && rawId.length <= 15
+						params.servicesTypeId = shouldCastToNumber ? Number(rawId) : rawId
+					}
+
 					if (this.category === 1) {
 						const service = this.serviceTypeName || this.serviceName || ''
 						if (service) params.service = service
-						if (this.serviceTypeId !== undefined && this.serviceTypeId !== null && String(this.serviceTypeId) !== '') {
-							const rawId = String(this.serviceTypeId)
-							const shouldCastToNumber = /^\d+$/.test(rawId) && rawId.length <= 15
-							params.servicesTypeId = shouldCastToNumber ? Number(rawId) : rawId
-						}
 						if (this.serviceTypeName) params.serviceTypeName = this.serviceTypeName
 					}
 					

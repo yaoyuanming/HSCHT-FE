@@ -115,26 +115,17 @@
 	import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
 	import { shouldUseCustomTabBar } from '@/utils/app.js'
 	import { ref, computed } from 'vue'
-	import { onShow, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
+	import { onShow } from '@dcloudio/uni-app'
 	import { useStore } from 'vuex'
 	import { completeLoginFlow } from '@/utils/auth'
 	import { getObtainUserBalance } from '@/api/user.js'
 	import { getTicketList } from '@/api/ticket.js'
 	import { getCompanyRecordList } from '@/api/company_profile'
-	import { useShare } from '@/mixins/useShare.js'
 
 	const showCustomTabBar = shouldUseCustomTabBar()
 	const statusBarHeight = ref(0)
 	const systemInfo = uni.getSystemInfoSync()
 	statusBarHeight.value = systemInfo.statusBarHeight || 20
-
-	// 开启分享功能
-	const { shareAppMessage, shareTimeline } = useShare({
-		title: '海丝出海通'
-	})
-	
-	onShareAppMessage(shareAppMessage)
-	onShareTimeline(shareTimeline)
 
 	// “我的服务”入口显示配置：按构建标识（app1/app2）控制显示哪些 key。
 	// 说明：key 必须与 allServiceList 中的 item.key 对应。

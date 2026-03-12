@@ -76,7 +76,6 @@ import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
 import PurchaserInfo from './components/PurchaserInfo.vue'
 import ProcurementInfo from './components/ProcurementInfo.vue'
 import { shouldUseCustomTabBar } from '@/utils/app.js'
-import share from '@/mixins/share.js'
 import { getFilterCountries, handleCountryFilter } from './utils/filter.js'
 
 export default {
@@ -85,7 +84,6 @@ export default {
 		PurchaserInfo,
 		ProcurementInfo
 	},
-	mixins: [share],
 	data() {
 		return {
 			statusBarHeight: 0,

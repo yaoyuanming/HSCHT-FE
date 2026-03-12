@@ -11,7 +11,7 @@
 					<text class="purchase-title">{{ item.title }}</text>
 					<text class="country-tag" v-if="item.country">{{ item.country }}</text>
 				</view>
-				<button class="consult-btn sm">我要咨询</button>
+				<button class="consult-btn sm" @click="goConsult">我要咨询</button>
 			</view>
 			
 			<!-- 时间信息 -->
@@ -118,6 +118,11 @@ export default {
 			} catch (e) {
 				console.error(e);
 			}
+		},
+		goConsult() {
+			uni.navigateTo({
+				url: '/pages/Home/Component/consult?servicesTypeId=2'
+			});
 		}
 	}
 }

@@ -10,19 +10,10 @@
 	import CourseList from './components/CourseList.vue'
 	import { shouldUseCustomTabBar } from '@/utils/app.js'
 	import { ref } from 'vue'
-	import { onPullDownRefresh, onReachBottom, onShow, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
-	import { useShare } from '@/mixins/useShare.js'
+	import { onPullDownRefresh, onReachBottom, onShow } from '@dcloudio/uni-app'
 
 	const showCustomTabBar = shouldUseCustomTabBar()
 	const courseListRef = ref(null)
-
-	// 开启分享功能
-	const { shareAppMessage, shareTimeline } = useShare({
-		title: '海丝出海通'
-	})
-	
-	onShareAppMessage(shareAppMessage)
-	onShareTimeline(shareTimeline)
 
 	onShow(() => {
 		courseListRef.value?.loadCourses(true, true)

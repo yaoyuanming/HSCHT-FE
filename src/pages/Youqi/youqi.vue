@@ -54,7 +54,6 @@ import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
 import Industry from './components/Industry.vue'
 import Enterprise from './components/enterprise.vue'
 import { shouldUseCustomTabBar } from '@/utils/app.js'
-import share from '@/mixins/share.js'
 
 export default {
 	components: {
@@ -62,7 +61,6 @@ export default {
 		Industry,
 		Enterprise
 	},
-	mixins: [share],
 	data() {
 		return {
 			statusBarHeight: 0,

@@ -32,7 +32,8 @@ export default {
 		return {
 			productList: [],
 			queryParams: {
-				pageNum: 1
+				pageNum: 1,
+				status: '1'
 			}
 		}
 	},
@@ -41,7 +42,10 @@ export default {
 			try {
 				const res = await getProductList(this.queryParams);
 				if (res.code === 200 || res.code === 0) {
-					this.productList = res.rows || res.data?.rows || [];
+					const rows = res.rows || res.data?.rows || [];
+					// 仅渲染状态为启用的产品 (0禁用, 1启用)
+					// 使用松散比较 (==) 同时支持数字 1 和字符串 '1'
+					this.productList = rows.filter(item => item.status == 1);
 				}
 			} catch (e) {
 				console.error('获取企业优品数据失败:', e);

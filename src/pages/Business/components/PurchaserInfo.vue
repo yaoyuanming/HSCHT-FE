@@ -44,7 +44,7 @@
 								<text class="label">职位</text>
 								<text class="value">{{ item.position }}</text>
 							</view>
-							<button class="consult-btn">我要咨询</button>
+							<button class="consult-btn" @click="goConsult">我要咨询</button>
 						</view>
 					</view>
 				</view>
@@ -112,6 +112,11 @@ export default {
 			} catch (e) {
 				console.error('获取国际采购商列表失败', e);
 			}
+		},
+		goConsult() {
+			uni.navigateTo({
+				url: '/pages/Home/Component/consult?servicesTypeId=1'
+			});
 		}
 	}
 }

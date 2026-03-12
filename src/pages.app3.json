@@ -70,7 +70,7 @@
 			}
 		},
 		{
-			"path": "pages/My/My",
+			"path": "pages/Myconfig/Myconfig",
 			"style": {
 				"navigationBarTitleText": "我的"
 			}
@@ -164,6 +164,12 @@
 				"navigationBarBackgroundColor": "#1E88FF",
 				"navigationBarTextStyle": "white"
 			}
+		},
+		{
+			"path": "pages/Homeconfig/funtion/Health_consultant",
+			"style": {
+				"navigationBarTitleText": "健康咨询师"
+			}
 		}
 	],
 	"globalStyle": {
@@ -200,7 +206,7 @@
 				"text": "课程"
 			},
 			{
-				"pagePath": "pages/My/My",
+				"pagePath": "pages/Myconfig/Myconfig",
 				"iconPath": "/static/nav/my.png",
 				"selectedIconPath": "/static/nav/my-active.png",
 				"text": "我的"
