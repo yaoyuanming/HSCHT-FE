@@ -14,7 +14,10 @@
 							<text class="city">{{ extractCity(item.registeredAddress) }}</text>
 						</view> -->
 					</view>
-					<view class="company-name">{{ item.companyName || '企业名称' }}</view>
+					<view class="company-row">
+						<image class="company-logo" :src="processLogo(item.logoUrl || item.logo)" mode="aspectFill"></image>
+						<view class="company-name">{{ item.companyName || '企业名称' }}</view>
+					</view>
 				</view>
 			</view>
 		</view>
@@ -38,6 +41,17 @@ export default {
 		}
 	},
 	methods: {
+		processLogo(url) {
+			if (!url) return '/static/logo.png';
+			const cleanedPath = String(url).trim().replace(/^[`'"]+|[`'"]+$/g, '');
+			if (!cleanedPath) return '/static/logo.png';
+			if (/^https?:\/\//i.test(cleanedPath)) {
+				return cleanedPath;
+			}
+			const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+			const normalizedPath = cleanedPath.startsWith('/') ? cleanedPath : `/${cleanedPath}`;
+			return baseUrl ? (baseUrl + normalizedPath) : normalizedPath;
+		},
 		async loadData() {
 			try {
 				const res = await getProductList(this.queryParams);
@@ -142,12 +156,26 @@ export default {
 			}
 		}
 
-		.company-name {
-			font-size: 24rpx;
-			color: #999;
-			white-space: nowrap;
-			overflow: hidden;
-			text-overflow: ellipsis;
+		.company-row {
+			display: flex;
+			align-items: center;
+
+			.company-logo {
+				width: 32rpx;
+				height: 32rpx;
+				border-radius: 50%;
+				margin-right: 8rpx;
+				background-color: #f8f8f8;
+			}
+
+			.company-name {
+				font-size: 24rpx;
+				color: #999;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				flex: 1;
+			}
 		}
 	}
 }

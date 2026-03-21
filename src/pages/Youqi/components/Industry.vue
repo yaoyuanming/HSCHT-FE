@@ -4,7 +4,7 @@
 			<view class="industry-card" v-for="(item, index) in listData" :key="index">
 				<view class="card-header">
 					<view class="header-left">
-						<view class="company-logo-placeholder"></view>
+						<image class="company-logo" :src="processLogo(item.logoUrl || item.logo)" mode="aspectFill"></image>
 						<view class="company-info">
 							<view class="company-name">{{ item.companyName || '企业名称' }}</view>
 							<view class="company-address">{{ item.registeredAddress || '注册地址' }}</view>
@@ -65,6 +65,17 @@ export default {
 		}
 	},
 	methods: {
+		processLogo(url) {
+			if (!url) return '/static/logo.png';
+			const cleanedPath = String(url).trim().replace(/^[`'"]+|[`'"]+$/g, '');
+			if (!cleanedPath) return '/static/logo.png';
+			if (/^https?:\/\//i.test(cleanedPath)) {
+				return cleanedPath;
+			}
+			const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+			const normalizedPath = cleanedPath.startsWith('/') ? cleanedPath : `/${cleanedPath}`;
+			return baseUrl ? (baseUrl + normalizedPath) : normalizedPath;
+		},
 		async loadData() {
 			try {
 				const res = await getCompanyRecordsList(this.queryParams);
@@ -115,7 +126,7 @@ export default {
 			flex: 1;
 			margin-right: 20rpx;
 
-			.company-logo-placeholder {
+			.company-logo {
 				width: 80rpx;
 				height: 80rpx;
 				background-color: #f2f2f2;

@@ -18,7 +18,7 @@
 				<!-- 基本信息卡片 -->
 				<view class="info-card">
 					<view class="card-header">
-						<image src="/static/company/用户.png" class="header-icon" mode="aspectFit"></image>
+						<image :src="processLogo(detail.logoUrl)" class="header-icon" mode="aspectFill"></image>
 						<text>基本信息</text>
 					</view>
 					
@@ -124,6 +124,7 @@
 				statusBarHeight: 20,
 				recordId: '',
 				detail: {
+					logoUrl: '',
 					contactName: '',
 					phone: '',
 					companyName: '',
@@ -162,6 +163,7 @@
 				const establishmentDate = d.establishmentDate || d.estDate || ''
 				const datePart = typeof establishmentDate === 'string' ? establishmentDate.split(' ')[0] : establishmentDate
 				return {
+					logoUrl: d.logoUrl || d.logo || '',
 					contactName: d.name || d.contactName || '',
 					phone: d.phone || '',
 					companyName: d.companyName || '',
@@ -171,6 +173,17 @@
 					estDate: datePart || '',
 					scope: d.scopeBusiness || d.scope || ''
 				}
+			},
+			processLogo(url) {
+				if (!url) return '/static/logo.png';
+				const cleanedPath = String(url).trim().replace(/^[`'"]+|[`'"]+$/g, '');
+				if (!cleanedPath) return '/static/logo.png';
+				if (/^https?:\/\//i.test(cleanedPath)) {
+					return cleanedPath;
+				}
+				const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+				const normalizedPath = cleanedPath.startsWith('/') ? cleanedPath : `/${cleanedPath}`;
+				return baseUrl ? (baseUrl + normalizedPath) : normalizedPath;
 			},
 			async loadDetail() {
 				try {
@@ -280,9 +293,11 @@
 			align-items: center;
 			
 			.header-icon {
-				width: 40rpx;
-				height: 40rpx;
+				width: 48rpx;
+				height: 48rpx;
 				margin-right: 16rpx;
+				border-radius: 50%;
+				background-color: #f8f8f8;
 			}
 		}
 	}

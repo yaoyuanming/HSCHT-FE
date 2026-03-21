@@ -84,15 +84,6 @@
 						</view>
 						<uni-icons type="right" size="14" color="#ccc"></uni-icons>
 					</view>
-					<view class="menu-item" @click="onNavClick('password')">
-						<view class="item-left">
-							<view class="icon-wrapper">
-								<uni-icons type="locked" size="20" color="#333"></uni-icons>
-							</view>
-							<text class="item-text">密码修改</text>
-						</view>
-						<uni-icons type="right" size="14" color="#ccc"></uni-icons>
-					</view>
 					<view class="menu-item" @click="onNavClick('logout')">
 						<view class="item-left">
 							<view class="icon-wrapper">
@@ -163,7 +154,6 @@
 	const store = useStore()
 	const token = computed(() => store.getters.token)
 	const userInfo = computed(() => store.getters.userInfo)
-
 	const balanceAmount = ref('0.00')
 	const ticketCount = ref(0)
 	const companyRecordCount = ref(0)
@@ -313,9 +303,6 @@
 				uni.navigateTo({
 					url: '/pages/Home/Component/user_agreement'
 				})
-				break;
-			case 'password':
-				uni.showToast({ title: '密码修改', icon: 'none' })
 				break;
 			case 'logout':
 				uni.showModal({

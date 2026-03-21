@@ -172,12 +172,8 @@
 		computed
 	} from 'vue'
 	import {
-		onShow,
-		onPullDownRefresh
+		onShow
 	} from '@dcloudio/uni-app'
-	import {
-		handlePullDownRefresh
-	} from '@/utils/refresh.js'
 	import {
 		getCountryList
 	} from '@/api/country.js'
@@ -437,6 +433,17 @@
 		fetchUserCount()
 	}
 
+	// 检查并初始化数据（带缓存逻辑）
+	const initHomeData = () => {
+		// 如果关键数据（如国家列表或资讯列表）已经有数据了，就不再重复加载
+		if (allCountries.value.length > 0 || hotNewsList.value.length > 0) {
+			console.log('首页数据已存在，跳过重复加载')
+			return
+		}
+		console.log('首页数据为空，开始加载数据')
+		refreshHomeData()
+	}
+
 	// 获取用户数量
 	const fetchUserCount = async () => {
 		try {
@@ -455,14 +462,12 @@
 	})
 
 	onShow(() => {
-		refreshHomeData()
+		initHomeData()
 	})
 
-	// 下拉刷新
-	onPullDownRefresh(() => {
-		handlePullDownRefresh(() => {
-			refreshHomeData()
-		})
+	// 暴露给全局下拉刷新 Mixin
+	defineExpose({
+		refreshData: refreshHomeData
 	})
 </script>
 
