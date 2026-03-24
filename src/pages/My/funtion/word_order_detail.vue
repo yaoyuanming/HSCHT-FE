@@ -115,7 +115,8 @@
 			<view class="file-picker-area">
 				<uni-file-picker 
 					v-model="replyFiles" 
-					file-mediatype="all" 
+					file-mediatype="image" 
+					source-type="['album', 'camera']"
 					mode="grid" 
 					limit="5"
 					:auto-upload="false"
@@ -124,10 +125,10 @@
 				>
 					<view class="upload-btn-custom">
 						<uni-icons type="cloud-upload" size="20" color="#666"></uni-icons>
-						<text class="upload-text">选择文件</text>
+						<text class="upload-text">选择图片</text>
 					</view>
 				</uni-file-picker>
-				<view class="file-hint">支持jpg、png、pdf格式，单个文件不超过10MB</view>
+				<view class="file-hint">支持jpg、png格式，单个文件不超过10MB</view>
 			</view>
 			<view class="action-row">
 				<button class="send-btn" type="primary" size="mini" @click="submitReply" :loading="submitting">发送</button>

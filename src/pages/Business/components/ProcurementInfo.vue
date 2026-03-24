@@ -16,8 +16,14 @@
 			
 			<!-- 时间信息 -->
 			<view class="time-info">
-				<text>发布时间 {{ item.publishTime }}</text>
-				<text class="ml-20">截止时间 {{ item.deadline }}</text>
+				<view class="time-item">
+					<text class="label">发布时间</text>
+					<text class="value">{{ item.publishTime }}</text>
+				</view>
+				<view class="time-item ml-20">
+					<text class="label">截止时间</text>
+					<text class="value">{{ item.deadline }}</text>
+				</view>
 			</view>
 			
 			<!-- 采购商 -->
@@ -72,6 +78,7 @@ export default {
 				const res = await getPurchaseInfoList(this.queryParams);
 				if (res.code === 200) {
 					const rows = res.rows || res.data?.rows || [];
+					const now = new Date();
 					const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 
 					const formatTime = (timeStr) => {
@@ -86,7 +93,11 @@ export default {
 						return `${y}-${m}-${d} ${h}:${min}`;
 					};
 					
-					this.purchaseList = rows.map(item => {
+					this.purchaseList = rows.filter(item => {
+						const deadlineStr = item.deadline || item.endTime;
+						if (!deadlineStr) return true;
+						return new Date(deadlineStr) > now;
+					}).map(item => {
 						// 处理图片
 						let images = [];
 						const rawImg = item.purchaseInfoUrl || item.purchaseInfoOss || '';
@@ -182,6 +193,15 @@ export default {
 	white-space: nowrap;
 }
 
+.time-item {
+	display: flex;
+	align-items: center;
+}
+
+.time-item .label {
+	margin-right: 8rpx;
+}
+
 .ml-20 {
 	margin-left: 20rpx;
 }
@@ -196,7 +216,10 @@ export default {
 
 .purchaser-row .label {
 	color: #999;
-	margin-right: 16rpx;
+	margin-right: 8rpx;
+	width: 100rpx;
+	flex-shrink: 0;
+	text-align-last: justify;
 }
 
 .description {

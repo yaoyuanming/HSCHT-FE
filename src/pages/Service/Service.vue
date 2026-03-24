@@ -54,6 +54,11 @@
 				<CourseList ref="courseRef"></CourseList>
 			</view>
 
+			<!-- 商务考察 -->
+			<view v-else-if="currentTab === 3">
+				<BusinessInspection ref="inspectionRef" />
+			</view>
+
 			<!-- 其他服务 (暂未开发) -->
 			<view v-else class="empty-state">
 				<image src="/static/empty.png" mode="aspectFit" class="empty-img" v-if="false"></image>
@@ -67,9 +72,10 @@
 
 <script setup>
 	import { ref, computed, onMounted } from 'vue'
-	import { onLoad, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
+	import { onLoad, onPullDownRefresh, onReachBottom, onShow } from '@dcloudio/uni-app'
 	import GovernmentService from '@/pages/Home/Component/government.vue'
 	import CourseList from '@/pages/Course/components/CourseList.vue'
+	import BusinessInspection from './components/BusinessInspection.vue'
 	import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
 	import { shouldUseCustomTabBar } from '@/utils/app.js'
 	// import UniPopup from '@/uni_modules/uni-popup/components/uni-popup/uni-popup.vue'
@@ -83,6 +89,7 @@
 	const countryList = ref([])
 	const selectedCountry = ref({})
 	const courseRef = ref(null)
+	const inspectionRef = ref(null)
 	const loading = ref(false)
 	const initialized = ref({ 0: false, 1: false, 2: false, 3: false })
 
@@ -93,6 +100,15 @@
 		statusBarHeight.value = sysInfo.statusBarHeight;
 	})
 
+	onShow(() => {
+		const targetTab = uni.getStorageSync('serviceTab')
+		if (targetTab !== undefined && targetTab !== null && targetTab !== '') {
+			const index = Number(targetTab)
+			switchTab(index)
+			uni.removeStorageSync('serviceTab')
+		}
+	})
+
 	onMounted(() => {
 		fetchCountryList()
 	})
@@ -100,6 +116,8 @@
 	onPullDownRefresh(async () => {
 		if (currentTab.value === 2 && courseRef.value) {
 			await courseRef.value.loadCourses(true, true)
+		} else if (currentTab.value === 3 && inspectionRef.value) {
+			await inspectionRef.value.loadNews(true, true)
 		} else if (currentTab.value === 0) {
 			await fetchCountryList()
 		}
@@ -109,6 +127,8 @@
 	onReachBottom(() => {
 		if (currentTab.value === 2 && courseRef.value) {
 			courseRef.value.loadCourses()
+		} else if (currentTab.value === 3 && inspectionRef.value) {
+			inspectionRef.value.loadNews()
 		}
 	})
 
@@ -134,6 +154,24 @@
 					initialized.value[index] = true;
 				} catch (e) {
 					console.error('加载课程失败', e);
+				} finally {
+					loading.value = false;
+				}
+			} else if (index === 3) {
+				// For component based tabs, give a tick for ref to be available
+				loading.value = true;
+				try {
+					await new Promise(resolve => {
+						setTimeout(async () => {
+							if (inspectionRef.value) {
+								await inspectionRef.value.loadNews(true, true);
+							}
+							resolve();
+						}, 100);
+					});
+					initialized.value[index] = true;
+				} catch (e) {
+					console.error('加载考察资讯失败', e);
 				} finally {
 					loading.value = false;
 				}

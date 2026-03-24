@@ -27,6 +27,12 @@
 			}
 		},
 		{
+			"path": "pages/Service/funtion/business_detail",
+			"style": {
+				"navigationBarTitleText": "考察详情"
+			}
+		},
+		{
 			"path": "pages/Course/Course",
 			"style": {
 				"navigationBarTitleText": "活动"

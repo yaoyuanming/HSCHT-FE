@@ -39,11 +39,9 @@
 							<text class="label">电  话</text>
 							<text class="value">{{ item.phone }}</text>
 						</view>
-						<view class="info-item contact-action-row">
-							<view class="info-item mr-10">
-								<text class="label">职位</text>
-								<text class="value">{{ item.position }}</text>
-							</view>
+						<view class="info-item position-container">
+							<text class="label">职位</text>
+							<text class="value">{{ item.position }}</text>
 							<button class="consult-btn" @click="goConsult">我要咨询</button>
 						</view>
 					</view>
@@ -126,7 +124,7 @@ export default {
 .business-card {
 	background-color: #fff;
 	border-radius: 24rpx;
-	padding: 32rpx 24rpx;
+	padding: 32rpx 20rpx;
 	margin-bottom: 24rpx;
 	box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
 	border: 2rpx solid transparent;
@@ -223,7 +221,7 @@ export default {
 
 .info-row {
 	display: flex;
-	justify-content: space-between;
+	justify-content: flex-start;
 	align-items: center;
 	gap: 20rpx;
 }
@@ -231,16 +229,31 @@ export default {
 .info-item {
 	display: flex;
 	align-items: center;
-	font-size: 26rpx;
-	flex: 1;
+	font-size: 24rpx;
+	width: 290rpx;
+	flex-shrink: 0;
 	min-width: 0;
 }
 
 .info-item .label {
 	color: #999;
-	margin-right: 16rpx;
-	width: 90rpx;
+	margin-right: 8rpx;
+	width: 80rpx;
 	flex-shrink: 0;
+	text-align-last: justify;
+}
+
+.info-row .info-item:last-child {
+	flex: 1;
+	width: auto;
+}
+
+.position-container .value {
+	margin-right: 8rpx;
+}
+
+.info-row .info-item:last-child .label {
+	width: 48rpx;
 }
 
 .info-item .value {
@@ -256,22 +269,14 @@ export default {
 	font-size: 24rpx;
 }
 
-.contact-action-row {
-	justify-content: space-between;
-}
-
-.mr-10 {
-	margin-right: 10rpx;
-}
-
 .consult-btn {
 	margin: 0;
-	padding: 0 24rpx;
-	height: 52rpx;
-	line-height: 52rpx;
+	padding: 0 16rpx;
+	height: 48rpx;
+	line-height: 48rpx;
 	background-color: #3b71ff;
 	color: #fff;
-	font-size: 24rpx;
+	font-size: 22rpx;
 	border-radius: 8rpx;
 	border: none;
 	flex-shrink: 0;

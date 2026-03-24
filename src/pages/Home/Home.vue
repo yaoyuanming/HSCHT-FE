@@ -137,7 +137,7 @@
 				<view class="header-left">
 					<text class="header-title">热门资讯</text>
 				</view>
-				<view class="header-right">
+				<view class="header-right" @click="handleMoreNews">
 					<text class="more-text">更多</text>
 					<uni-icons type="right" size="14" color="#999999"></uni-icons>
 				</view>
@@ -188,6 +188,7 @@
 		getUserList,
 		getUserCount
 	} from '@/api/home/index.js'
+	import { getNewsList } from '@/api/new.js'
 	// import HomeService from './Component/Home_Service.vue'
 	import CustomTabBar from '@/components/CustomTabBar/CustomTabBar.vue'
 	import { shouldUseCustomTabBar } from '@/utils/app.js'
@@ -303,31 +304,42 @@
 		}
 	}
 
-	// 获取活动列表
-	const fetchActivityList = async () => {
+	// 获取热门资讯列表
+	const fetchNewsList = async () => {
 		try {
-			const res = await getActivityList({
+			const res = await getNewsList({
 				status: '1',
-				pageSize: 3,
-				pageNum: 1
+				pageSize: 5,
+				pageNum: 1,
+				orderByColumn: 'createTime',
+				isAsc: 'desc'
 			})
 			if (!res || (res.code !== 200 && res.code !== 0)) return
 			const dataList = res.rows || res.data?.rows || res.data || []
 			if (Array.isArray(dataList)) {
+				const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 				hotNewsList.value = dataList.map(item => {
-					// 简单去除 HTML 标签
-					const desc = item.introduction ? item.introduction.replace(/<[^>]+>/g, '') : ''
+					const rawImg = item.imageUrl || item.image || ''
+					let image = '/static/home/banner.png'
+					if (rawImg) {
+						if (/^https?:\/\//i.test(rawImg)) {
+							image = rawImg
+						} else {
+							const normalizedPath = rawImg.startsWith('/') ? rawImg : `/${rawImg}`
+							image = baseUrl ? (baseUrl + normalizedPath) : normalizedPath
+						}
+					}
 					return {
 						id: item.id,
-						image: item.activityImageUrl || '/static/home/banner.png',
-						title: item.activityName || '未命名活动',
-						desc: desc,
-						time: item.activityTimeStart || ''
+						image,
+						title: item.title || '无标题',
+						desc: item.profile || '',
+						time: item.createTime || ''
 					}
 				})
 			}
 		} catch (e) {
-			console.error('获取活动列表失败', e)
+			console.error('获取热门资讯失败', e)
 		}
 	}
 
@@ -413,22 +425,28 @@
 	
 	const handleDomesticItem = (item) => {
 		uni.navigateTo({
-			url: `/pages/Home/Component/consult?service=${item.name}`
+			url: `/pages/Home/Component/consult?category=2&service=${encodeURIComponent(item.name)}`
 		});
+	}
+
+	const handleMoreNews = () => {
+		uni.setStorageSync('serviceTab', 3)
+		uni.switchTab({
+			url: '/pages/Service/Service'
+		})
 	}
 
 	const handleNewsClick = (item) => {
 		if (item.id) {
 			uni.navigateTo({
-				// 假设有一个新闻详情页，或者先跳到原来的 detail
-				url: `/pages/Course/detail?id=${item.id}`
+				url: `/pages/Service/funtion/business_detail?id=${encodeURIComponent(item.id)}`
 			})
 		}
 	}
 
 	const refreshHomeData = () => {
 		fetchCountryList()
-		fetchActivityList()
+		fetchNewsList()
 		fetchPurchaseInfos()
 		fetchUserCount()
 	}

@@ -110,6 +110,8 @@
 				this.category = Number(options.category);
 				if (this.category === 1) {
 					this.pageTitle = '服务咨询';
+				} else if (this.category === 2) {
+					this.pageTitle = '境内服务咨询';
 				}
 			}
 
@@ -233,7 +235,7 @@
 						params.servicesTypeId = shouldCastToNumber ? Number(rawId) : rawId
 					}
 
-					if (this.category === 1) {
+					if (this.category === 1 || this.category === 2) {
 						const service = this.serviceTypeName || this.serviceName || ''
 						if (service) params.service = service
 						if (this.serviceTypeName) params.serviceTypeName = this.serviceTypeName
