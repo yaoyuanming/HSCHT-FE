@@ -161,6 +161,7 @@
 	.banner {
 		width: 100%;
 		position: relative;
+		background-color: #ffffff; /* 确保状态栏区域背景色一致 */
 	}
 
 	.banner-img {

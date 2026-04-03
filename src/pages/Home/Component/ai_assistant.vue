@@ -553,7 +553,15 @@
 	});
 
 	const goBack = () => {
-		uni.navigateBack();
+		const pages = getCurrentPages();
+		console.log('goBack pages length:', pages.length);
+		if (pages.length > 1) {
+			uni.navigateBack();
+		} else {
+			uni.switchTab({
+				url: '/pages/Home/Home'
+			});
+		}
 	};
 
 	const handleNewChat = () => {
@@ -564,6 +572,14 @@
 	};
 
 	const handleSkip = () => {
+		const pages = getCurrentPages();
+		const hasArtificial = pages.some(p => p.route.includes('pages/Home/Component/artificial'));
+		
+		if (hasArtificial) {
+			uni.navigateBack();
+			return;
+		}
+
 		let url = '/pages/Home/Component/artificial';
 		const params = [];
 		if (queryOptions.value.category) params.push(`category=${queryOptions.value.category}`);

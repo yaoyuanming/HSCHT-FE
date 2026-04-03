@@ -360,7 +360,19 @@
 			const dataList = res.rows || res.data?.rows || []
 			if (Array.isArray(dataList)) {
 				const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
-				const filtered = dataList.filter(item => String(item?.status ?? '') !== '2')
+				const now = new Date()
+				
+				// 统一过滤逻辑：排除状态为2且已过截止时间的项目
+				const filtered = dataList.filter(item => {
+					// 1. 状态过滤 (与之前保持一致)
+					if (String(item?.status ?? '') === '2') return false
+					
+					// 2. 截止时间过滤 (与 ProcurementInfo.vue 保持一致)
+					const deadlineStr = item.deadline || item.endTime
+					if (!deadlineStr) return true
+					return new Date(deadlineStr) > now
+				})
+
 				const top3 = filtered.slice(0, 3).map(item => {
 					const rawImg = item.purchaseInfoUrl || item.purchaseInfoOss || ''
 					const cleanedImg = String(rawImg || '').trim().replace(/^[`'"]+|[`'"]+$/g, '')

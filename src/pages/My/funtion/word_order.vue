@@ -53,8 +53,12 @@
 			async fetchList() {
 				try {
 					uni.showLoading({ title: '加载中' })
-					// 传入 isQuerySelf: true 只查询当前用户的工单
-					const res = await getTicketList({ isQuerySelf: true })
+					// 传入 isQuerySelf: true 只查询当前用户的工单，并按创建时间倒序排列
+					const res = await getTicketList({ 
+						isQuerySelf: true,
+						orderByColumn: 'createTime',
+						isAsc: 'desc'
+					})
 					const list = res.data?.rows || res.rows || res.data || []
 					
 					// 初步映射

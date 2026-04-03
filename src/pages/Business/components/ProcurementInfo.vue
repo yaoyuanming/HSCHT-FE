@@ -94,6 +94,10 @@ export default {
 					};
 					
 					this.purchaseList = rows.filter(item => {
+						// 1. 状态过滤：排除已关闭或无效的项目 (与首页保持一致)
+						if (String(item?.status ?? '') === '2') return false;
+
+						// 2. 截止时间过滤：排除已过截止时间的项目
 						const deadlineStr = item.deadline || item.endTime;
 						if (!deadlineStr) return true;
 						return new Date(deadlineStr) > now;

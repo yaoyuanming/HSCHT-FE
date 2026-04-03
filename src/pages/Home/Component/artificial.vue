@@ -548,10 +548,26 @@
 	};
 
 	const goBack = () => {
-		uni.navigateBack();
+		const pages = getCurrentPages();
+		console.log('goBack pages length:', pages.length);
+		if (pages.length > 1) {
+			uni.navigateBack();
+		} else {
+			uni.switchTab({
+				url: '/pages/Home/Home'
+			});
+		}
 	};
 
 	const switchToAI = () => {
+		const pages = getCurrentPages();
+		const hasAI = pages.some(p => p.route.includes('pages/Home/Component/ai_assistant'));
+		
+		if (hasAI) {
+			uni.navigateBack();
+			return;
+		}
+
 		// 跳转到AI咨询页面
 		uni.navigateTo({
 			url: '/pages/Home/Component/ai_assistant'
