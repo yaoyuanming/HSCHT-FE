@@ -5,9 +5,11 @@
 
 	export default {
 		onLaunch: async function() {
-			// 仅在 app1 时隐藏原生TabBar，因为只有 app1 使用了 CustomTabBar
 			if (shouldUseCustomTabBar()) {
-				uni.hideTabBar()
+				uni.hideTabBar({ animation: false })
+				setTimeout(() => {
+					uni.hideTabBar({ animation: false })
+				}, 50)
 			}
 			
 			console.warn('当前组件仅支持 uni_modules 目录结构 ，请升级 HBuilderX 到 3.1.0 版本以上！')
@@ -29,6 +31,9 @@
 			}
 		},
 		onShow: function() {
+			if (shouldUseCustomTabBar()) {
+				uni.hideTabBar({ animation: false })
+			}
 			console.log('App Show')
 		},
 		onHide: function() {
