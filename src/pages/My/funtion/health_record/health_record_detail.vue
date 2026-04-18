@@ -220,13 +220,7 @@
 </template>
 
 <script>
-	import { 
-		getHealthRecordList, 
-		getUnderlyingMedicalConditionList,
-		updateHealthRecord,
-		updateUnderlyingMedicalCondition,
-		addUnderlyingMedicalCondition
-	} from '@/api/health_record.js'
+	import api_health_record from '@/api/health_record'
 
 	export default {
 		data() {
@@ -252,9 +246,9 @@
 			}
 		},
 		onLoad(options) {
+			console.log('health_record_detail onLoad', options);
 			const sysInfo = uni.getSystemInfoSync();
 			this.statusBarHeight = sysInfo.statusBarHeight;
-			
 			this.fetchData();
 		},
 		methods: {
@@ -284,13 +278,13 @@
 					}
 
 					// 1. 获取健康档案详情
-					const recordRes = await getHealthRecordList({ userId: userId });
+					const recordRes = await api_health_record.getHealthRecordList({ userId: userId });
 					if (recordRes && recordRes.rows && recordRes.rows.length > 0) {
 						// 取最新一条
 						this.detail = recordRes.rows[0];
 						
 						// 2. 获取基础病症
-						const diseaseRes = await getUnderlyingMedicalConditionList({ healthRecordsId: this.detail.id });
+						const diseaseRes = await api_health_record.getUnderlyingMedicalConditionList({ healthRecordsId: this.detail.id });
 						if (diseaseRes && diseaseRes.rows) {
 							this.diseaseList = diseaseRes.rows;
 						} else {
@@ -418,7 +412,7 @@
 						// createTime: this.editForm.createDate // 通常创建时间不更新，或需要带时分秒
 					};
 					
-					await updateHealthRecord(updateParams);
+					await api_health_record.updateHealthRecord(updateParams);
 					
 					// 2. 更新病症
 					// 策略：遍历 editForm.diseaseList
@@ -430,9 +424,9 @@
 						.filter(item => item.symptomsName && item.symptomsName.trim() !== '')
 						.map(item => {
 							if (item.id) {
-								return updateUnderlyingMedicalCondition(item);
+								return api_health_record.updateUnderlyingMedicalCondition(item);
 							} else {
-								return addUnderlyingMedicalCondition({
+								return api_health_record.addUnderlyingMedicalCondition({
 									healthRecordsId: this.editForm.id,
 									symptomsName: item.symptomsName,
 									symptomsDescription: item.symptomsDescription

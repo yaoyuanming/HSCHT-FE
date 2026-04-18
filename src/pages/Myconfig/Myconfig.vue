@@ -39,9 +39,9 @@
 						<text class="stat-value">{{ ticketCount }}</text>
 						<text class="stat-label">服务工单</text>
 					</view>
-					<view class="stat-item" @click="onNavClick('company')">
-						<text class="stat-value">{{ companyRecordCount }}</text>
-						<text class="stat-label">企业档案</text>
+					<view class="stat-item" @click="onNavClick('health')">
+						<text class="stat-value">{{ healthRecordCount }}</text>
+						<text class="stat-label">健康档案</text>
 					</view>
 				</view>
 			</view>
@@ -84,6 +84,24 @@
 						</view>
 						<uni-icons type="right" size="14" color="#ccc"></uni-icons>
 					</view>
+					<view class="menu-item" @click="onNavClick('project')">
+						<view class="item-left">
+							<view class="icon-wrapper">
+								<uni-icons type="flag" size="20" color="#333"></uni-icons>
+							</view>
+							<text class="item-text">我的项目</text>
+						</view>
+						<uni-icons type="right" size="14" color="#ccc"></uni-icons>
+					</view>
+					<view class="menu-item" @click="onNavClick('course')">
+						<view class="item-left">
+							<view class="icon-wrapper">
+								<uni-icons type="videocam" size="20" color="#333"></uni-icons>
+							</view>
+							<text class="item-text">我的课程</text>
+						</view>
+						<uni-icons type="right" size="14" color="#ccc"></uni-icons>
+					</view>
 					<view class="menu-item" @click="onNavClick('logout')">
 						<view class="item-left">
 							<view class="icon-wrapper">
@@ -111,7 +129,7 @@
 	import { completeLoginFlow } from '@/utils/auth'
 	import { getObtainUserBalance } from '@/api/user.js'
 	import { getTicketList } from '@/api/ticket.js'
-	import { getCompanyRecordList } from '@/api/company_profile'
+	import { getHealthRecordList } from '@/api/health_record.js'
 
 	const showCustomTabBar = shouldUseCustomTabBar()
 	const statusBarHeight = ref(0)
@@ -156,7 +174,7 @@
 	const userInfo = computed(() => store.getters.userInfo)
 	const balanceAmount = ref('0.00')
 	const ticketCount = ref(0)
-	const companyRecordCount = ref(0)
+	const healthRecordCount = ref(0)
 	const loading = ref(false) // Changed default to false
 	const hasInitialized = ref(false) // Track if we've loaded at least once
 	const allServiceList = ref([
@@ -232,20 +250,19 @@
 		}
 	}
 
-	const refreshCompanyRecordCount = async () => {
+	const refreshHealthRecordCount = async () => {
 		if (!token.value) {
-			companyRecordCount.value = 0
+			healthRecordCount.value = 0
 			return
 		}
 		try {
-			const userId = userInfo.value?.user?.userId || userInfo.value?.userId
-			const res = await getCompanyRecordList({ userId })
+			const res = await getHealthRecordList()
 			// 兼容不同的接口返回结构
-			const list = res.rows || res.data?.rows || (Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []))
-			companyRecordCount.value = list.length
+			const total = res.total !== undefined ? res.total : (res.data?.total !== undefined ? res.data.total : (Array.isArray(res.rows) ? res.rows.length : (Array.isArray(res.data) ? res.data.length : 0)))
+			healthRecordCount.value = total
 		} catch (e) {
-			console.error('Fetch company record count failed:', e)
-			companyRecordCount.value = 0
+			console.error('Fetch health record count failed:', e)
+			healthRecordCount.value = 0
 		}
 	}
 
@@ -259,7 +276,7 @@
 			hasInitialized.value = false // Set to false to trigger loading or refresh
 			refreshBalance()
 			refreshTicketCount()
-			refreshCompanyRecordCount()
+			refreshHealthRecordCount()
 		} else {
 			uni.showToast({ title: '登录失败', icon: 'none' })
 		}
@@ -352,7 +369,7 @@
 			await Promise.all([
 				refreshBalance(),
 				refreshTicketCount(),
-				refreshCompanyRecordCount()
+				refreshHealthRecordCount()
 			])
 			hasInitialized.value = true
 		} catch (e) {

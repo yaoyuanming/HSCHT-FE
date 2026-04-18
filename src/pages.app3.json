@@ -140,6 +140,13 @@
 			}
 		},
 		{
+			"path": "pages/My/funtion/health_record/health_record_detail",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "健康档案详情"
+			}
+		},
+		{
 			"path": "pages/My/my_service/project/index",
 			"style": {
 				"navigationBarTitleText": "我的项目"

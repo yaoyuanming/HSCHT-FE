@@ -1,3 +1,4 @@
+// 企业档案接口
 import request from '@/utils/request'
 
 export const createCompanyRecord = (data) => {
