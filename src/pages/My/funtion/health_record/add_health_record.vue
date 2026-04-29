@@ -67,12 +67,24 @@
 					
 					<view class="form-item">
 						<text class="label required">电话号</text>
-						<input class="input" type="number" v-model="formData.phone" placeholder="请输入电话号" placeholder-class="placeholder" />
+						<input
+							class="input"
+							type="number"
+							v-model="formData.phone"
+							placeholder="请输入电话号"
+							placeholder-class="placeholder"
+						/>
 					</view>
 					
 					<view class="form-item">
 						<text class="label">身份证号</text>
-						<input class="input" type="idcard" v-model="formData.idCard" placeholder="请输入身份证号" placeholder-class="placeholder" />
+						<input
+							class="input"
+							type="idcard"
+							v-model="formData.idCard"
+							placeholder="请输入身份证号"
+							placeholder-class="placeholder"
+						/>
 					</view>
 					
 					<view class="form-item">
@@ -220,6 +232,22 @@
 					uni.showToast({ title: '请输入电话号', icon: 'none' });
 					return;
 				}
+				if (String(this.formData.phone).length > 11) {
+					uni.showToast({ title: '手机号不能超过11位', icon: 'none' });
+					return;
+				}
+				if (!/^1\d{10}$/.test(String(this.formData.phone))) {
+					uni.showToast({ title: '手机号格式不正确', icon: 'none' });
+					return;
+				}
+				if (this.formData.idCard && String(this.formData.idCard).length > 18) {
+					uni.showToast({ title: '身份证号不能超过18位', icon: 'none' });
+					return;
+				}
+				if (this.formData.idCard && !/(^\d{15}$)|(^\d{17}[\dXx]$)/.test(String(this.formData.idCard))) {
+					uni.showToast({ title: '身份证号格式不正确', icon: 'none' });
+					return;
+				}
 				
 				uni.showLoading({ title: '保存中...' });
 				
@@ -307,10 +335,12 @@
 					uni.hideLoading();
 					uni.showToast({ title: '保存成功', icon: 'success' });
 					
-					// 延迟返回，让提示显示一会儿
+					// 创建完成后直接替换到详情页，避免返回到创建页
 					setTimeout(() => {
-						uni.navigateBack();
-					}, 1500);
+						uni.redirectTo({
+							url: '/pages/My/funtion/health_record/health_record_detail'
+						});
+					}, 600);
 
 				} catch (error) {
 					console.error('保存失败:', error);

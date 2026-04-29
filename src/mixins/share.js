@@ -11,20 +11,19 @@
  *    shareImageUrl: 'https://example.com/share.png'
  */
 
+const getDefaultShareTitle = () => {
+	const appKey = String(import.meta.env.VITE_APP_KEY || '').trim().replace(/^['"]|['"]$/g, '')
+	const titleMap = {
+		app1: '海丝出海通',
+		app2: '易广善',
+		app3: '心月明'
+	}
+	return titleMap[appKey] || '海丝出海通'
+}
+
 export default {
 	data() {
-		// 获取小程序名称作为默认分享标题
-		let defaultTitle = '海丝出海通';
-		// #ifdef MP-WEIXIN
-		try {
-			const accountInfo = uni.getAccountInfoSync();
-			if (accountInfo && accountInfo.miniProgram && accountInfo.miniProgram.name) {
-				defaultTitle = accountInfo.miniProgram.name;
-			}
-		} catch (e) {
-			console.error('获取小程序名称失败:', e);
-		}
-		// #endif
+		const defaultTitle = getDefaultShareTitle()
 
 		return {
 			// 设置默认的分享参数

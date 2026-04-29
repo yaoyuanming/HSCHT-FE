@@ -256,10 +256,24 @@
 			return
 		}
 		try {
-			const res = await getHealthRecordList()
-			// 兼容不同的接口返回结构
-			const total = res.total !== undefined ? res.total : (res.data?.total !== undefined ? res.data.total : (Array.isArray(res.rows) ? res.rows.length : (Array.isArray(res.data) ? res.data.length : 0)))
-			healthRecordCount.value = total
+			const userId = userInfo.value?.user?.userId || userInfo.value?.userId || uni.getStorageSync('userId')
+			if (!userId) {
+				healthRecordCount.value = 0
+				return
+			}
+			const res = await getHealthRecordList({ userId })
+			// 按当前用户结果优先使用 rows 长度，避免 total 字段被后端返回为全量计数
+			const rows = Array.isArray(res?.rows)
+				? res.rows
+				: (Array.isArray(res?.data?.rows) ? res.data.rows : null)
+			if (Array.isArray(rows)) {
+				healthRecordCount.value = rows.length
+				return
+			}
+			const total = res?.total !== undefined
+				? Number(res.total)
+				: (res?.data?.total !== undefined ? Number(res.data.total) : 0)
+			healthRecordCount.value = Number.isFinite(total) ? total : 0
 		} catch (e) {
 			console.error('Fetch health record count failed:', e)
 			healthRecordCount.value = 0

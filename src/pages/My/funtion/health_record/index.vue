@@ -61,7 +61,8 @@
 				}
 			},
 			handleCreate() {
-				uni.navigateTo({
+				// 使用 redirectTo 替换当前空状态页，避免创建成功后详情页返回到空状态页
+				uni.redirectTo({
 					url: '/pages/My/funtion/health_record/add_health_record'
 				})
 			}

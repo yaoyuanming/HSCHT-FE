@@ -13,8 +13,15 @@
  * onShareTimeline(shareTimeline)
  */
 export function useShare(options = {}) {
+	const appKey = String(import.meta.env.VITE_APP_KEY || '').trim().replace(/^['"]|['"]$/g, '')
+	const titleMap = {
+		app1: '海丝出海通',
+		app2: '易广善',
+		app3: '心月明'
+	}
+
 	const defaultOptions = {
-		title: '海丝出海通', // 默认为小程序名称
+		title: titleMap[appKey] || '海丝出海通',
 		path: '', // 默认为当前页面路径
 		imageUrl: '', // 默认为当前页面截图
 		query: '' // 默认为当前页面参数

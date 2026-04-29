@@ -105,6 +105,13 @@ const navigateByUrl = (url) => {
 
 	// 页面方法
 	const goToDialogue = (rows) => {
+		// 首页快捷入口兜底：健康档案统一跳转到健康档案页
+		if (rows?.actionName === '健康档案') {
+			uni.navigateTo({
+				url: '/pages/My/funtion/health_record/index'
+			})
+			return
+		}
 		if (rows.linkType == 1) {
 			navigateByUrl(rows.linkUrl)
 		} else {

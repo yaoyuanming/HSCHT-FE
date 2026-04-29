@@ -259,12 +259,16 @@
 						content: '当前正在编辑，确定要放弃修改并退出吗？',
 						success: (res) => {
 							if (res.confirm) {
-								uni.navigateBack();
+								uni.switchTab({
+									url: '/pages/Myconfig/Myconfig'
+								});
 							}
 						}
 					});
 				} else {
-					uni.navigateBack();
+					uni.switchTab({
+						url: '/pages/Myconfig/Myconfig'
+					});
 				}
 			},
 			async fetchData() {
@@ -390,6 +394,22 @@
 				}
 				if (!this.editForm.phone) {
 					uni.showToast({ title: '请输入电话号', icon: 'none' });
+					return;
+				}
+				if (String(this.editForm.phone).length > 11) {
+					uni.showToast({ title: '手机号不能超过11位', icon: 'none' });
+					return;
+				}
+				if (!/^1\d{10}$/.test(String(this.editForm.phone))) {
+					uni.showToast({ title: '手机号格式不正确', icon: 'none' });
+					return;
+				}
+				if (this.editForm.idCard && String(this.editForm.idCard).length > 18) {
+					uni.showToast({ title: '身份证号不能超过18位', icon: 'none' });
+					return;
+				}
+				if (this.editForm.idCard && !/(^\d{15}$)|(^\d{17}[\dXx]$)/.test(String(this.editForm.idCard))) {
+					uni.showToast({ title: '身份证号格式不正确', icon: 'none' });
 					return;
 				}
 
