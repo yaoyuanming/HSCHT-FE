@@ -1,0 +1,17 @@
+{
+  "name": "心月明",
+  "appid": "",
+  "description": "",
+  "versionName": "1.0.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "mp-weixin": {
+    "appid": "wxac3556487f9bd35e",
+    "setting": {
+      "urlCheck": false
+    },
+    "usingComponents": true,
+    "mergeVirtualHostAttributes": true
+  },
+  "vueVersion": "3"
+}

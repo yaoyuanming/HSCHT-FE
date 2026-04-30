@@ -67,12 +67,24 @@
 					
 					<view class="form-item">
 						<text class="label required">电话号</text>
-						<input class="input" type="number" v-model="formData.phone" placeholder="请输入电话号" placeholder-class="placeholder" />
+						<input
+							class="input"
+							type="number"
+							v-model="formData.phone"
+							placeholder="请输入电话号"
+							placeholder-class="placeholder"
+						/>
 					</view>
 					
 					<view class="form-item">
 						<text class="label">身份证号</text>
-						<input class="input" type="idcard" v-model="formData.idCard" placeholder="请输入身份证号" placeholder-class="placeholder" />
+						<input
+							class="input"
+							type="idcard"
+							v-model="formData.idCard"
+							placeholder="请输入身份证号"
+							placeholder-class="placeholder"
+						/>
 					</view>
 					
 					<view class="form-item">
@@ -143,7 +155,7 @@
 </template>
 
 <script>
-	import { addHealthRecord, addUnderlyingMedicalCondition, getHealthRecordList } from '@/api/health_record.js'
+	import api_health_record from '@/api/health_record'
 
 	export default {
 		data() {
@@ -220,6 +232,22 @@
 					uni.showToast({ title: '请输入电话号', icon: 'none' });
 					return;
 				}
+				if (String(this.formData.phone).length > 11) {
+					uni.showToast({ title: '手机号不能超过11位', icon: 'none' });
+					return;
+				}
+				if (!/^1\d{10}$/.test(String(this.formData.phone))) {
+					uni.showToast({ title: '手机号格式不正确', icon: 'none' });
+					return;
+				}
+				if (this.formData.idCard && String(this.formData.idCard).length > 18) {
+					uni.showToast({ title: '身份证号不能超过18位', icon: 'none' });
+					return;
+				}
+				if (this.formData.idCard && !/(^\d{15}$)|(^\d{17}[\dXx]$)/.test(String(this.formData.idCard))) {
+					uni.showToast({ title: '身份证号格式不正确', icon: 'none' });
+					return;
+				}
 				
 				uni.showLoading({ title: '保存中...' });
 				
@@ -250,7 +278,7 @@
 					};
 
 					console.log('addHealthRecord params:', healthRecordParams);
-					const res = await addHealthRecord(healthRecordParams);
+					const res = await api_health_record.addHealthRecord(healthRecordParams);
 					console.log('addHealthRecord response:', res);
 					
 					let finalId = null;
@@ -272,29 +300,28 @@
 					if (!finalId) {
 						console.log('Response ID missing, trying to fetch list...');
 						try {
-							const listRes = await getHealthRecordList({ userId: userId });
+							const listRes = await api_health_record.getHealthRecordList({ userId: userId });
 							console.log('getHealthRecordList response:', listRes);
 							if (listRes && listRes.rows && listRes.rows.length > 0) {
 								// 假设最新的在最前，或者根据创建时间/ID排序
-								// 这里简单取第一个，或者可以过滤
-								finalId = listRes.rows[0].id || listRes.rows[0].healthRecordsId;
-								console.log('Fetched ID from list:', finalId);
+								finalId = listRes.rows[0].id;
 							}
-						} catch (listErr) {
-							console.error('Failed to fetch health record list:', listErr);
+						} catch (e) {
+							console.error('Fetch list failed:', e);
 						}
 					}
 
 					if (!finalId) {
-						console.error('无法获取档案ID, response:', JSON.stringify(res));
-						throw new Error('保存档案成功但未返回ID，且无法查询到档案记录');
+						uni.hideLoading();
+						uni.showToast({ title: '保存失败：未获取到档案ID', icon: 'none' });
+						return;
 					}
 
-					// 2. 保存基础病症
+					// 2. 保存病症列表
 					const diseasePromises = this.diseaseList
 						.filter(item => item.name && item.name.trim() !== '')
 						.map(item => {
-							return addUnderlyingMedicalCondition({
+							return api_health_record.addUnderlyingMedicalCondition({
 								healthRecordsId: finalId,
 								symptomsName: item.name,
 								symptomsDescription: item.desc
@@ -307,14 +334,18 @@
 
 					uni.hideLoading();
 					uni.showToast({ title: '保存成功', icon: 'success' });
+					
+					// 创建完成后直接替换到详情页，避免返回到创建页
 					setTimeout(() => {
-						uni.navigateBack();
-					}, 1500);
+						uni.redirectTo({
+							url: '/pages/My/funtion/health_record/health_record_detail'
+						});
+					}, 600);
 
 				} catch (error) {
 					console.error('保存失败:', error);
 					uni.hideLoading();
-					uni.showToast({ title: error.message || '保存失败', icon: 'none' });
+					uni.showToast({ title: '保存失败，请稍后重试', icon: 'none' });
 				}
 			}
 		}

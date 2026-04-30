@@ -220,13 +220,7 @@
 </template>
 
 <script>
-	import { 
-		getHealthRecordList, 
-		getUnderlyingMedicalConditionList,
-		updateHealthRecord,
-		updateUnderlyingMedicalCondition,
-		addUnderlyingMedicalCondition
-	} from '@/api/health_record.js'
+	import api_health_record from '@/api/health_record'
 
 	export default {
 		data() {
@@ -252,9 +246,9 @@
 			}
 		},
 		onLoad(options) {
+			console.log('health_record_detail onLoad', options);
 			const sysInfo = uni.getSystemInfoSync();
 			this.statusBarHeight = sysInfo.statusBarHeight;
-			
 			this.fetchData();
 		},
 		methods: {
@@ -265,12 +259,16 @@
 						content: '当前正在编辑，确定要放弃修改并退出吗？',
 						success: (res) => {
 							if (res.confirm) {
-								uni.navigateBack();
+								uni.switchTab({
+									url: '/pages/Myconfig/Myconfig'
+								});
 							}
 						}
 					});
 				} else {
-					uni.navigateBack();
+					uni.switchTab({
+						url: '/pages/Myconfig/Myconfig'
+					});
 				}
 			},
 			async fetchData() {
@@ -284,13 +282,13 @@
 					}
 
 					// 1. 获取健康档案详情
-					const recordRes = await getHealthRecordList({ userId: userId });
+					const recordRes = await api_health_record.getHealthRecordList({ userId: userId });
 					if (recordRes && recordRes.rows && recordRes.rows.length > 0) {
 						// 取最新一条
 						this.detail = recordRes.rows[0];
 						
 						// 2. 获取基础病症
-						const diseaseRes = await getUnderlyingMedicalConditionList({ healthRecordsId: this.detail.id });
+						const diseaseRes = await api_health_record.getUnderlyingMedicalConditionList({ healthRecordsId: this.detail.id });
 						if (diseaseRes && diseaseRes.rows) {
 							this.diseaseList = diseaseRes.rows;
 						} else {
@@ -398,6 +396,22 @@
 					uni.showToast({ title: '请输入电话号', icon: 'none' });
 					return;
 				}
+				if (String(this.editForm.phone).length > 11) {
+					uni.showToast({ title: '手机号不能超过11位', icon: 'none' });
+					return;
+				}
+				if (!/^1\d{10}$/.test(String(this.editForm.phone))) {
+					uni.showToast({ title: '手机号格式不正确', icon: 'none' });
+					return;
+				}
+				if (this.editForm.idCard && String(this.editForm.idCard).length > 18) {
+					uni.showToast({ title: '身份证号不能超过18位', icon: 'none' });
+					return;
+				}
+				if (this.editForm.idCard && !/(^\d{15}$)|(^\d{17}[\dXx]$)/.test(String(this.editForm.idCard))) {
+					uni.showToast({ title: '身份证号格式不正确', icon: 'none' });
+					return;
+				}
 
 				uni.showLoading({ title: '保存中...' });
 				try {
@@ -418,7 +432,7 @@
 						// createTime: this.editForm.createDate // 通常创建时间不更新，或需要带时分秒
 					};
 					
-					await updateHealthRecord(updateParams);
+					await api_health_record.updateHealthRecord(updateParams);
 					
 					// 2. 更新病症
 					// 策略：遍历 editForm.diseaseList
@@ -430,9 +444,9 @@
 						.filter(item => item.symptomsName && item.symptomsName.trim() !== '')
 						.map(item => {
 							if (item.id) {
-								return updateUnderlyingMedicalCondition(item);
+								return api_health_record.updateUnderlyingMedicalCondition(item);
 							} else {
-								return addUnderlyingMedicalCondition({
+								return api_health_record.addUnderlyingMedicalCondition({
 									healthRecordsId: this.editForm.id,
 									symptomsName: item.symptomsName,
 									symptomsDescription: item.symptomsDescription

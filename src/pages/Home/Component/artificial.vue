@@ -24,7 +24,7 @@
 			<view class="chat-padding">
 				
 				<!-- 消息列表 -->
-				<view class="chat-message" :class="msg.role" v-for="(msg, index) in messages" :key="index">
+				<view class="chat-message" :class="msg.role" v-for="(msg, index) in messages" :key="msg._k || index">
 					<!-- 助手/客服头像 -->
 					<view class="avatar" v-if="msg.role === 'assistant'">
 						<uni-icons type="person-filled" size="20" color="#999"></uni-icons>
@@ -36,7 +36,7 @@
 						<text v-if="msg.content" class="message-text" user-select>{{ msg.content }}</text>
 						
 						<!-- 图片消息 -->
-						<view v-if="msg.ossUrl && getFileType(msg.ossUrl) === 'image'" class="message-image-box">
+						<view v-if="msg.ossUrl && msg.fileType === 'image'" class="message-image-box">
 							<image 
 								:src="msg.ossUrl" 
 								mode="widthFix" 
@@ -47,7 +47,7 @@
 
 						<!-- 文档消息 -->
 						<view 
-							v-if="msg.ossUrl && getFileType(msg.ossUrl) === 'document'" 
+							v-else-if="msg.ossUrl && msg.fileType === 'document'" 
 							class="message-file"
 							@click="openDocument(msg.ossUrl)"
 						>
@@ -101,10 +101,11 @@
 
 <script setup>
 	import { ref, computed } from 'vue';
-	import { onLoad } from '@dcloudio/uni-app';
+	import { onLoad, onUnload, onHide, onShow } from '@dcloudio/uni-app';
 	import { useStore } from 'vuex';
 	import UniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue';
 	import { addConsultation, addConsultationMessage, getConsultationMessageList, getUserConsultationList } from '@/api/consultation.js';
+	import { utilsConfig } from '@/config/utils';
 
 	const store = useStore();
 	const userId = computed(() => store.state.userId);
@@ -116,9 +117,75 @@
 	// 消息列表
 	const messages = ref([]);
 
+	const socketTask = ref(null);
+	const wsConnected = ref(false);
+	const wsConnecting = ref(false);
+	let heartbeatTimer = null;
+	let reconnectTimer = null;
+	let syncTimer = null;
+	let syncing = false;
+	let resyncRequested = false;
+	let lastSyncAt = 0;
+	let manualClose = false;
+	let wsListenersInited = false;
+
 	const hasContent = computed(() => {
 		return inputText.value.trim().length > 0;
 	});
+
+	const normalizeStr = (v) => (v === undefined || v === null ? '' : String(v)).trim();
+
+	const toTimestamp = (raw) => {
+		if (raw === undefined || raw === null) return 0;
+		if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0;
+		const s = String(raw).trim();
+		const m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
+		if (m) {
+			return new Date(
+				Number(m[1]),
+				Number(m[2]) - 1,
+				Number(m[3]),
+				Number(m[4]),
+				Number(m[5]),
+				Number(m[6])
+			).getTime();
+		}
+		const t = Date.parse(s);
+		return Number.isFinite(t) ? t : 0;
+	};
+
+	const getRowTime = (r) => r && (r.createTime || r.create_time || r.updateTime || r.update_time || r.sendTime || r.send_time);
+
+	const makeFingerprint = (r) => {
+		return [
+			normalizeStr(r && r.senderType),
+			normalizeStr(r && r.senderId),
+			normalizeStr(r && r.contentType),
+			normalizeStr(r && r.content),
+			normalizeStr(r && r.ossUrl)
+		].join('|');
+	};
+
+	const makeRowKey = (r) => {
+		const id = r && (r.id ?? r.messageId);
+		if (id !== undefined && id !== null && String(id).length > 0) return `id:${String(id)}`;
+		const fp = makeFingerprint(r);
+		const ts = toTimestamp(getRowTime(r));
+		return `fp:${fp}|t:${String(ts)}`;
+	};
+
+	const mapRowToMsg = (r) => {
+		const ossUrl = r && r.ossUrl;
+		const ft = ossUrl ? getFileType(ossUrl) : 'text';
+		const fileType = ft === 'image' ? 'image' : ossUrl ? 'document' : 'text';
+		return {
+			role: r && r.senderType === '1' ? 'assistant' : 'user',
+			content: r && r.content,
+			ossUrl,
+			fileType,
+			_k: makeRowKey(r)
+		};
+	};
 
 	onLoad(async (options) => {
 		const sysInfo = uni.getSystemInfoSync();
@@ -171,28 +238,254 @@
 				consultationId: consultationId.value
 			});
 			if (res && res.rows) {
-				// 按照时间正序排序 (旧消息在前，新消息在后)
-				const sortedRows = res.rows.sort((a, b) => {
-					const timeA = new Date(a.createTime || a.create_time).getTime();
-					const timeB = new Date(b.createTime || b.create_time).getTime();
-					return timeA - timeB;
-				});
+				const uniqByFp = new Map();
+				for (const r of res.rows) {
+					const fp = makeFingerprint(r);
+					if (!uniqByFp.has(fp)) {
+						uniqByFp.set(fp, r);
+						continue;
+					}
+					const cur = uniqByFp.get(fp);
+					const curId = cur && (cur.id ?? cur.messageId);
+					const nextId = r && (r.id ?? r.messageId);
+					if ((curId === undefined || curId === null || String(curId).length === 0) && (nextId !== undefined && nextId !== null && String(nextId).length > 0)) {
+						uniqByFp.set(fp, r);
+						continue;
+					}
+					const curTs = toTimestamp(getRowTime(cur));
+					const nextTs = toTimestamp(getRowTime(r));
+					if (curTs === 0 && nextTs !== 0) {
+						uniqByFp.set(fp, r);
+					}
+				}
 
-				// 转换消息格式
-				messages.value = sortedRows.map(msg => {
-					// senderType: "0" 客户, "1" 客服
-					return {
-						role: msg.senderType === '1' ? 'assistant' : 'user',
-						content: msg.content,
-						ossUrl: msg.ossUrl // 映射ossUrl字段
-					};
-				});
+				const rows = Array.from(uniqByFp.values());
+				const sortedRows = rows.sort((a, b) => toTimestamp(getRowTime(a)) - toTimestamp(getRowTime(b)));
+				messages.value = sortedRows.map(mapRowToMsg);
 				scrollToBottom();
+				initWebSocket();
 			}
 		} catch (e) {
 			console.error('获取消息列表失败:', e);
 		}
 	};
+
+	const createWebSocketUrl = () => {
+		const base = import.meta.env.VITE_API_BASE_URL || '';
+		const isSecure = base.startsWith('https');
+		const wsBase = base.replace(/^http(s?):/i, isSecure ? 'wss:' : 'ws:');
+		const sep = wsBase.endsWith('/') ? '' : '/';
+		return `${wsBase}${sep}services/websocket`;
+	};
+
+	const handleSocketMessage = (event) => {
+		const raw = event && event.data;
+		if (!raw) return;
+		triggerSync();
+	};
+
+	const syncLatestMessages = async () => {
+		if (!consultationId.value) return;
+		if (syncing) {
+			resyncRequested = true;
+			return;
+		}
+		syncing = true;
+		try {
+			const res = await getConsultationMessageList({
+				consultationId: consultationId.value
+			});
+			if (!res || !res.rows) return;
+			const uniqByFp = new Map();
+			for (const r of res.rows) {
+				const fp = makeFingerprint(r);
+				if (!uniqByFp.has(fp)) {
+					uniqByFp.set(fp, r);
+					continue;
+				}
+				const cur = uniqByFp.get(fp);
+				const curId = cur && (cur.id ?? cur.messageId);
+				const nextId = r && (r.id ?? r.messageId);
+				if ((curId === undefined || curId === null || String(curId).length === 0) && (nextId !== undefined && nextId !== null && String(nextId).length > 0)) {
+					uniqByFp.set(fp, r);
+					continue;
+				}
+				const curTs = toTimestamp(getRowTime(cur));
+				const nextTs = toTimestamp(getRowTime(r));
+				if (curTs === 0 && nextTs !== 0) {
+					uniqByFp.set(fp, r);
+				}
+			}
+			const rows = Array.from(uniqByFp.values());
+			const sortedRows = rows.sort((a, b) => toTimestamp(getRowTime(a)) - toTimestamp(getRowTime(b)));
+			const existed = new Set(messages.value.map(m => m && m._k).filter(Boolean));
+			let appended = 0;
+			for (const r of sortedRows) {
+				const k = makeRowKey(r);
+				if (existed.has(k)) continue;
+				const role = r && r.senderType === '1' ? 'assistant' : 'user';
+				const content = r && r.content;
+				const ossUrl = r && r.ossUrl;
+				const idx = messages.value.findIndex(m => m && String(m._k || '').startsWith('local:') && m.role === role && String(m.content || '') === String(content || '') && String(m.ossUrl || '') === String(ossUrl || ''));
+				if (idx !== -1) {
+					messages.value[idx]._k = k;
+					if (ossUrl) {
+						const ft = getFileType(ossUrl);
+						messages.value[idx].fileType = ft === 'image' ? 'image' : 'document';
+						messages.value[idx].ossUrl = ossUrl;
+					}
+					existed.add(k);
+					continue;
+				}
+				existed.add(k);
+				const msg = mapRowToMsg(r);
+				msg._k = k;
+				messages.value.push(msg);
+				appended++;
+			}
+			if (appended > 0) scrollToBottom();
+		} catch (e) {
+		} finally {
+			syncing = false;
+			if (resyncRequested) {
+				resyncRequested = false;
+				triggerSync();
+			}
+		}
+	};
+
+	const triggerSync = () => {
+		if (syncTimer) return;
+		const MIN_INTERVAL = 1200;
+		const now = Date.now();
+		const elapsed = now - lastSyncAt;
+		const delay = elapsed >= MIN_INTERVAL ? 120 : Math.max(0, MIN_INTERVAL - elapsed);
+		syncTimer = setTimeout(async () => {
+			syncTimer = null;
+			lastSyncAt = Date.now();
+			await syncLatestMessages();
+		}, delay);
+	};
+
+	const startHeartbeat = () => {
+		if (heartbeatTimer) {
+			clearInterval(heartbeatTimer);
+			heartbeatTimer = null;
+		}
+		heartbeatTimer = setInterval(() => {
+			if (wsConnected.value) {
+				try {
+					uni.sendSocketMessage({
+						data: JSON.stringify({
+							type: 'ping'
+						})
+					});
+				} catch (e) {}
+			}
+		}, 25000);
+	};
+
+	const stopHeartbeat = () => {
+		if (heartbeatTimer) {
+			clearInterval(heartbeatTimer);
+			heartbeatTimer = null;
+		}
+	};
+
+	const scheduleReconnect = () => {
+		if (reconnectTimer || manualClose) return;
+		reconnectTimer = setTimeout(() => {
+			reconnectTimer = null;
+			if (!manualClose && consultationId.value && !wsConnected.value) {
+				initWebSocket();
+			}
+		}, 5000);
+	};
+
+	const closeWebSocket = () => {
+		manualClose = true;
+		stopHeartbeat();
+		if (syncTimer) {
+			clearTimeout(syncTimer);
+			syncTimer = null;
+		}
+		if (reconnectTimer) {
+			clearTimeout(reconnectTimer);
+			reconnectTimer = null;
+		}
+		try {
+			uni.closeSocket({});
+		} catch (e) {}
+		socketTask.value = null;
+		wsConnected.value = false;
+		wsConnecting.value = false;
+	};
+
+	const initWebSocket = () => {
+		if (!consultationId.value) return;
+		if (wsConnected.value || wsConnecting.value) return;
+		const url = createWebSocketUrl();
+		const header = {};
+		const token = uni.getStorageSync('token');
+		if (token) header.Authorization = 'Bearer ' + token;
+		if (utilsConfig && utilsConfig.clientId) header.clientid = utilsConfig.clientId;
+		if (utilsConfig && utilsConfig.tenantId) header['tenant-id'] = utilsConfig.tenantId;
+		wsConnecting.value = true;
+		manualClose = false;
+		const task = uni.connectSocket({
+			url,
+			header
+		});
+		socketTask.value = task;
+		if (!wsListenersInited) {
+			wsListenersInited = true;
+			uni.onSocketOpen(() => {
+				wsConnected.value = true;
+				wsConnecting.value = false;
+				startHeartbeat();
+				if (consultationId.value) {
+					try {
+						uni.sendSocketMessage({
+							data: JSON.stringify({
+								type: 'subscribe',
+								consultationId: consultationId.value,
+								userId: userId.value
+							})
+						});
+					} catch (e) {}
+				}
+				triggerSync();
+			});
+			uni.onSocketMessage((event) => {
+				handleSocketMessage(event);
+			});
+			const handleCloseOrError = () => {
+				wsConnected.value = false;
+				wsConnecting.value = false;
+				stopHeartbeat();
+				if (!manualClose) {
+					scheduleReconnect();
+				}
+			};
+			uni.onSocketClose(handleCloseOrError);
+			uni.onSocketError(handleCloseOrError);
+		}
+	};
+
+	onHide(() => {
+		closeWebSocket();
+	});
+
+	onUnload(() => {
+		closeWebSocket();
+	});
+
+	onShow(() => {
+		manualClose = false;
+		if (consultationId.value && !wsConnected.value && !wsConnecting.value) {
+			initWebSocket();
+		}
+	});
 
 	// 获取文件类型
 	const getFileType = (url) => {
@@ -255,10 +548,26 @@
 	};
 
 	const goBack = () => {
-		uni.navigateBack();
+		const pages = getCurrentPages();
+		console.log('goBack pages length:', pages.length);
+		if (pages.length > 1) {
+			uni.navigateBack();
+		} else {
+			uni.switchTab({
+				url: '/pages/Home/Home'
+			});
+		}
 	};
 
 	const switchToAI = () => {
+		const pages = getCurrentPages();
+		const hasAI = pages.some(p => p.route.includes('pages/Home/Component/ai_assistant'));
+		
+		if (hasAI) {
+			uni.navigateBack();
+			return;
+		}
+
 		// 跳转到AI咨询页面
 		uni.navigateTo({
 			url: '/pages/Home/Component/ai_assistant'
@@ -271,7 +580,9 @@
 		const content = inputText.value.trim();
 		messages.value.push({
 			role: 'user',
-			content: content
+			content: content,
+			fileType: 'text',
+			_k: `local:${Date.now()}-${Math.random().toString(16).slice(2)}`
 		});
 		
 		inputText.value = '';
@@ -279,27 +590,53 @@
 		
 		try {
 			if (!consultationId.value) {
-				// 新增咨询 (创建新对话)
-				// 调整参数结构，尝试扁平化并补充发送者信息
-				const params = {
+				const baseParams = {
 					status: '0',
 					consultationContent: content,
-					content: content, // 冗余兼容
+					content: content,
 					senderId: userId.value,
-					senderType: '0' // 0代表用户
+					senderType: '0'
 				};
-				const res = await addConsultation(params);
+				const res = await addConsultation(baseParams);
 				if (res && res.data && res.data.consultationId) {
 					consultationId.value = res.data.consultationId;
-					// 保存会话ID，以便下次进入时加载
 					uni.setStorageSync('last_consultation_id', consultationId.value);
 				} else if (res && res.rows) {
-					// 兼容可能的返回结构
-				} else if (res && res.code === 200 && res.msg === '操作成功' && !res.data) {
-                    // 如果创建成功但未返回ID，尝试重新获取列表或提示
-                    // 这种情况可能是后端未正确返回ID，或者参数仍有问题
-                    console.warn('创建咨询成功但未返回ID');
-                }
+				} else if (res && res.code === 200 && res.msg === '操作成功') {
+					try {
+						const listRes = await getUserConsultationList({
+							createBy: userId.value
+						});
+						if (listRes && listRes.rows && listRes.rows.length > 0) {
+							const sorted = listRes.rows
+								.filter((item) => item.createBy == userId.value)
+								.sort((a, b) => {
+									const timeA = new Date(a.createTime || a.create_time).getTime();
+									const timeB = new Date(b.createTime || b.create_time).getTime();
+									return timeB - timeA;
+								});
+							const latest = sorted[0] || listRes.rows[0];
+							if (latest) {
+								consultationId.value = latest.id || latest.consultationId;
+								if (consultationId.value) uni.setStorageSync('last_consultation_id', consultationId.value);
+							}
+						}
+					} catch (e) {
+						console.warn('创建咨询成功但获取咨询列表失败', e);
+					}
+				}
+
+				if (consultationId.value) {
+					const firstMsgParams = {
+						content: content,
+						contentType: '0',
+						senderId: userId.value,
+						senderType: '0',
+						consultationId: consultationId.value
+					};
+					await addConsultationMessage(firstMsgParams);
+					initWebSocket();
+				}
 			} else {
 				// 新增咨询消息 (已有对话)
 				const params = {
@@ -310,6 +647,7 @@
 					consultationId: consultationId.value
 				};
 				await addConsultationMessage(params);
+				triggerSync();
 			}
 		} catch (e) {
 			console.error('发送咨询失败:', e);

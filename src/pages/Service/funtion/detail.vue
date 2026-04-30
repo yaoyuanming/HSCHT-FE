@@ -46,12 +46,24 @@
 		data() {
 			return {
 				detail: {},
-				type: 'service' // service | guide
+				type: 'service', // service | guide
+				serviceTypeId: '',
+				serviceTypeName: ''
 			}
 		},
 		onLoad(options) {
 			if (options.type) {
 				this.type = options.type
+			}
+			if (options.serviceTypeId || options.servicesTypeId) {
+				this.serviceTypeId = options.serviceTypeId || options.servicesTypeId
+			}
+			if (options.serviceTypeName) {
+				try {
+					this.serviceTypeName = decodeURIComponent(options.serviceTypeName)
+				} catch (e) {
+					this.serviceTypeName = options.serviceTypeName
+				}
 			}
 			if (options.id) {
 				this.getDetail(options.id)
@@ -94,6 +106,12 @@
 								intro: data.articleIntro,
 								price: data.price
 							}
+							if (!this.serviceTypeId) {
+								this.serviceTypeId = data.servicesTypeId || data.serviceTypeId || data.typeId || data.services_type_id || ''
+							}
+							if (!this.serviceTypeName) {
+								this.serviceTypeName = data.serviceTypeName || data.servicesTypeName || data.typeName || data.services_type_name || ''
+							}
 							uni.setNavigationBarTitle({
 								title: this.detail.title || '服务详情'
 							})
@@ -121,9 +139,12 @@
 				}
 			},
 			consult() {
-				// 跳转到智能咨询助手，传递服务名称和类型(1:服务工单)
+				const resolvedServicesTypeId = this.serviceTypeId || this.detail.servicesTypeId || this.detail.serviceTypeId || this.detail.typeId ||
+					this.detail.services_type_id || ''
+				const resolvedServiceTypeName = this.serviceTypeName || this.detail.serviceTypeName || this.detail.servicesTypeName || this.detail.typeName ||
+					this.detail.services_type_name || ''
 				uni.navigateTo({
-					url: `/pages/Home/Component/ai_assistant?category=1&service=${encodeURIComponent(this.detail.title || '')}`
+					url: `/pages/Home/Component/consult?category=1&service=${encodeURIComponent(this.detail.title || '')}&servicesTypeId=${encodeURIComponent(resolvedServicesTypeId)}&serviceTypeName=${encodeURIComponent(resolvedServiceTypeName)}`
 				})
 			}
 		}
@@ -140,6 +161,7 @@
 	.banner {
 		width: 100%;
 		position: relative;
+		background-color: #ffffff; /* 确保状态栏区域背景色一致 */
 	}
 
 	.banner-img {

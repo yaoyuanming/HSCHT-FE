@@ -70,13 +70,20 @@
 			}
 		},
 		{
-			"path": "pages/My/My",
+			"path": "pages/Myconfig/Myconfig",
 			"style": {
-				"navigationBarTitleText": "我的"
+				"navigationStyle": "custom",
+				"navigationBarTextStyle": "white"
 			}
 		},
 		{
 			"path": "pages/Home/Component/consult",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/Home/Component/user_agreement",
 			"style": {
 				"navigationStyle": "custom"
 			}
@@ -134,6 +141,13 @@
 			}
 		},
 		{
+			"path": "pages/My/funtion/health_record/health_record_detail",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "健康档案详情"
+			}
+		},
+		{
 			"path": "pages/My/my_service/project/index",
 			"style": {
 				"navigationBarTitleText": "我的项目"
@@ -144,6 +158,26 @@
 			"style": {
 				"navigationBarTitleText": "我的课程"
 			}
+		},
+		{
+			"path": "pages/My/asset/coupon/index",
+			"style": {
+				"navigationBarTitleText": "优惠券"
+			}
+		},
+		{
+			"path": "pages/My/asset/wallet/index",
+			"style": {
+				"navigationBarTitleText": "我的钱包",
+				"navigationBarBackgroundColor": "#1E88FF",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/Homeconfig/funtion/Health_consultant",
+			"style": {
+				"navigationBarTitleText": "健康咨询师"
+			}
 		}
 	],
 	"globalStyle": {
@@ -151,6 +185,8 @@
 		"navigationBarTitleText": "uni-app",
 		"navigationBarBackgroundColor": "#F8F8F8",
 		"backgroundColor": "#F8F8F8",
+		"enablePullDownRefresh": true,
+		"backgroundTextStyle": "dark",
 		"app-plus": {
 			"background": "#efeff4"
 		}
@@ -169,8 +205,8 @@
 			},
 			{
 				"pagePath": "pages/project/index",
-				"iconPath": "/static/nav/service.png",
-				"selectedIconPath": "/static/nav/service-active.png",
+				"iconPath": "/static/nav/xmu.png",
+				"selectedIconPath": "/static/nav/xmu1.png",
 				"text": "项目"
 			},
 			{
@@ -180,7 +216,7 @@
 				"text": "课程"
 			},
 			{
-				"pagePath": "pages/My/My",
+				"pagePath": "pages/Myconfig/Myconfig",
 				"iconPath": "/static/nav/my.png",
 				"selectedIconPath": "/static/nav/my-active.png",
 				"text": "我的"

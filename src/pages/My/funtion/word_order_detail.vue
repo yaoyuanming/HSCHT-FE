@@ -80,30 +80,36 @@
 							<view v-if="item.files && item.files.length > 0">
 								<view class="reply-label">附件：</view>
 								<view class="attachment-list">
-										<view class="attachment-item" v-for="(file, fIndex) in item.files" :key="fIndex" @click="openFile(file)">
-											<template v-if="isImage(file)">
-												<image :src="getFileUrl(file)" mode="aspectFill" class="attachment-thumb"></image>
-											</template>
-											<template v-else>
-												<uni-icons type="paperclip" size="16" color="#ff4d4f"></uni-icons>
-											</template>
+									<view 
+										class="attachment-item" 
+										v-for="(file, fIndex) in item.files" 
+										:key="fIndex" 
+										@click="openFile(file, item.files)"
+										:class="{ 'is-image': isImage(file) }"
+									>
+										<template v-if="isImage(file)">
+											<image :src="getFileUrl(file)" mode="aspectFill" class="attachment-thumb"></image>
+										</template>
+										<template v-else>
+											<uni-icons type="paperclip" size="16" color="#ff4d4f"></uni-icons>
 											<text class="file-name">{{ file.originalName || file.fileName }}</text>
-										</view>
+										</template>
 									</view>
 								</view>
 							</view>
 						</view>
 					</view>
-					
-					<!-- 空状态 -->
-					<view v-if="timelineList.length === 0" class="empty-timeline">
-						<text>暂无处理记录</text>
-					</view>
+				</view>
+				
+				<!-- 空状态 -->
+				<view v-if="timelineList.length === 0" class="empty-timeline">
+					<text>暂无处理记录</text>
 				</view>
 			</view>
-			
-			<!-- 底部占位，防止被回复栏遮挡 -->
-			<view style="height: 300rpx;"></view>
+		</view>
+		
+		<!-- 底部占位，防止被回复栏遮挡 -->
+		<view style="height: 300rpx;"></view>
 		</scroll-view>
 
 		<!-- 底部回复栏 -->
@@ -115,7 +121,9 @@
 			<view class="file-picker-area">
 				<uni-file-picker 
 					v-model="replyFiles" 
-					file-mediatype="all" 
+					file-mediatype="image" 
+					file-extname="png,jpg,jpeg,gif"
+					:source-type="['album', 'camera']"
 					mode="grid" 
 					limit="5"
 					:auto-upload="false"
@@ -124,10 +132,10 @@
 				>
 					<view class="upload-btn-custom">
 						<uni-icons type="cloud-upload" size="20" color="#666"></uni-icons>
-						<text class="upload-text">选择文件</text>
+						<text class="upload-text">选择图片</text>
 					</view>
 				</uni-file-picker>
-				<view class="file-hint">支持jpg、png、pdf格式，单个文件不超过10MB</view>
+				<view class="file-hint">支持jpg、png格式，单个文件不超过10MB</view>
 			</view>
 			<view class="action-row">
 				<button class="send-btn" type="primary" size="mini" @click="submitReply" :loading="submitting">发送</button>
@@ -140,6 +148,7 @@
 	import { getTicketDetail, getTicketActivityLogList, addTicketActivityLog } from '@/api/ticket.js'
 	import { mapGetters } from 'vuex'
 	import { utilsConfig } from '@/config/utils.js'
+	import { doSilentLogin } from '@/utils/request.js'
 
 	export default {
 		data() {
@@ -251,11 +260,18 @@
 			 * @param {string} filePath 文件路径
 			 * @param {string} token 认证Token
 			 */
-			async performUpload(uploadUrl, filePath, token) {
+			async performUpload(uploadUrl, file, token) {
+				// 获取路径 (小程序端必须，H5端也可以使用 blob url)
+				const filePath = file.path || file.url
+				// H5端特有：如果存在原生 file 对象则优先使用（解决某些浏览器兼容性，PC端必须）
+				const fileObj = file.file
+
+				console.log('Performing upload:', { filePath, hasFileObj: !!fileObj })
+
 				const res = await new Promise((resolve, reject) => {
-					uni.uploadFile({
+					// 构建上传参数
+					const uploadParams = {
 						url: uploadUrl,
-						filePath: filePath,
 						name: 'file',
 						header: {
 							'Authorization': 'Bearer ' + token,
@@ -264,7 +280,22 @@
 						},
 						success: resolve,
 						fail: reject
-					})
+					}
+
+					// 如果是 H5/PC 环境且有 file 对象，优先使用 file
+					// #ifdef H5
+					if (fileObj) {
+						uploadParams.file = fileObj
+					} else {
+						uploadParams.filePath = filePath
+					}
+					// #endif
+
+					// #ifndef H5
+					uploadParams.filePath = filePath
+					// #endif
+
+					uni.uploadFile(uploadParams)
 				})
 				return this.parseUploadResponse(res)
 			},
@@ -302,16 +333,15 @@
 				console.log('Starting upload:', { baseUrl, uploadUrl, token: token ? 'Has Token' : 'No Token' })
 
 				for (const file of this.replyFiles) {
-					console.log('Processing file:', file)
-					// 优先使用 path (小程序), 其次 url
-					const filePath = file.path || file.url
-					if (!filePath) {
-						console.error('File path is empty:', file)
+					console.log('Processing file for upload:', file)
+					// 兼容各端的判断逻辑：要么有路径，要么有原生 file 对象
+					if (!file.path && !file.url && !file.file) {
+						console.error('Invalid file object:', file)
 						continue
 					}
 
 					try {
-						let data = await this.performUpload(uploadUrl, filePath, token)
+						let data = await this.performUpload(uploadUrl, file, token)
 						console.log('Upload result parsed:', data)
 
 						// 检查 401 错误 (Client ID与Token不匹配)
@@ -321,7 +351,7 @@
 								// 尝试刷新 token
 								const newToken = await doSilentLogin()
 								// 使用新 token 重试上传
-								data = await this.performUpload(uploadUrl, filePath, newToken)
+								data = await this.performUpload(uploadUrl, file, newToken)
 							} catch (refreshErr) {
 								console.error('Silent login failed during upload retry:', refreshErr)
 								throw new Error('登录已过期，请重新登录')
@@ -448,7 +478,7 @@
 				})
 			},
 
-			openFile(file) {
+			openFile(file, allFiles = []) {
 				const fileUrl = this.getFileUrl(file)
 				if (!fileUrl) {
 					uni.showToast({ title: '无效的文件链接', icon: 'none' })
@@ -481,8 +511,14 @@
 				console.log('Opening file:', fileUrl, 'Type:', fileType)
 
 				if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileType)) {
+					// 找到当前记录中所有的图片 URL
+					const imageUrls = allFiles && allFiles.length > 0
+						? allFiles.filter(f => this.isImage(f)).map(f => this.getFileUrl(f))
+						: [fileUrl]
+
 					uni.previewImage({
-						urls: [fileUrl],
+						current: fileUrl,
+						urls: imageUrls,
 						fail: () => {
 							uni.showToast({ title: '图片预览失败', icon: 'none' })
 						}
@@ -819,29 +855,43 @@
 
 	.attachment-list {
 		display: flex;
-		gap: 20rpx;
+		flex-wrap: wrap;
+		gap: 16rpx;
+		margin-top: 10rpx;
 	}
 
 	.attachment-item {
 		display: flex;
 		align-items: center;
 		background-color: #fff;
-		padding: 10rpx 20rpx;
+		padding: 8rpx 16rpx;
 		border-radius: 8rpx;
 		border: 1rpx solid #eee;
+		max-width: 100%;
+		box-sizing: border-box;
+		
+		&.is-image {
+			padding: 0;
+			border: none;
+			width: 160rpx;
+			height: 160rpx;
+			overflow: hidden;
+		}
 	}
 
 	.file-name {
 		font-size: 24rpx;
 		color: #333;
 		margin-left: 8rpx;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.attachment-thumb {
-		width: 60rpx;
-		height: 60rpx;
-		border-radius: 4rpx;
-		margin-right: 8rpx;
+		width: 100%;
+		height: 100%;
+		border-radius: 8rpx;
 	}
 
 	/* 底部回复栏 */

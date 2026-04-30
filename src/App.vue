@@ -1,9 +1,17 @@
 <script>
 	import store from '@/store/index'
 	import { completeLoginFlow } from '@/utils/auth'
+	import { shouldUseCustomTabBar } from '@/utils/app.js'
 
 	export default {
 		onLaunch: async function() {
+			if (shouldUseCustomTabBar()) {
+				uni.hideTabBar({ animation: false })
+				setTimeout(() => {
+					uni.hideTabBar({ animation: false })
+				}, 50)
+			}
+			
 			console.warn('当前组件仅支持 uni_modules 目录结构 ，请升级 HBuilderX 到 3.1.0 版本以上！')
 			console.log('App Launch')
 			
@@ -23,6 +31,9 @@
 			}
 		},
 		onShow: function() {
+			if (shouldUseCustomTabBar()) {
+				uni.hideTabBar({ animation: false })
+			}
 			console.log('App Show')
 		},
 		onHide: function() {

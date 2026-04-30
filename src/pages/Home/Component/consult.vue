@@ -53,6 +53,16 @@
 					<input class="input" type="number" placeholder-style="color:#cccccc" placeholder="请输入联系人电话"
 						v-model="formData.phone" />
 				</view>
+
+				<view class="agreement-row">
+					<checkbox-group @change="onAgreementChange">
+						<checkbox value="1" :checked="hasAgreedPolicy" color="#3b82f6" />
+					</checkbox-group>
+					<text class="agreement-text">我已阅读并同意</text>
+					<text class="agreement-link" @click="openUserAgreement">《用户服务协议》</text>
+					<text class="agreement-text">和</text>
+					<text class="agreement-link" @click="openPrivacyPolicy">《隐私政策》</text>
+				</view>
 			</view>
 		</scroll-view>
 
@@ -84,7 +94,10 @@
 					name: '',
 					phone: ''
 				},
+				hasAgreedPolicy: false,
 				serviceName: '',
+				serviceTypeId: '',
+				serviceTypeName: '',
 				category: 0, // 0:咨询工单, 1:服务工单
 				pageTitle: '我要咨询'
 			}
@@ -97,22 +110,75 @@
 				this.category = Number(options.category);
 				if (this.category === 1) {
 					this.pageTitle = '服务咨询';
+				} else if (this.category === 2) {
+					this.pageTitle = '境内服务咨询';
 				}
 			}
 
 			if (options.service) {
-				this.serviceName = options.service;
+				const rawService = options.service;
+				try {
+					this.serviceName = decodeURIComponent(rawService);
+				} catch (e) {
+					this.serviceName = rawService;
+				}
 				// 用户要求不再自动填充咨询内容，留空让用户自己输入
 				// if (this.category === 1) {
 				// 	this.formData.intention = `我对【${options.service}】很感兴趣，想了解更多详情。`;
 				// }
 			}
+			
+			const serviceTypeIdOption = options.servicesTypeId || options.serviceTypeId || options.typeId || options.services_type_id
+			if (serviceTypeIdOption !== undefined && serviceTypeIdOption !== null && String(serviceTypeIdOption) !== '') {
+				this.serviceTypeId = String(serviceTypeIdOption)
+			}
+			if (options.serviceTypeName) {
+				const rawServiceTypeName = options.serviceTypeName
+				try {
+					this.serviceTypeName = decodeURIComponent(rawServiceTypeName)
+				} catch (e) {
+					this.serviceTypeName = rawServiceTypeName
+				}
+			}
+
+			this.checkPrivacySetting()
 		},
 		methods: {
+			onAgreementChange(e) {
+				const values = e?.detail?.value || []
+				this.hasAgreedPolicy = values.includes('1')
+			},
+			openUserAgreement() {
+				uni.navigateTo({ url: '/pages/Home/Component/user_agreement' })
+			},
+			openPrivacyPolicy() {
+				const wxObj = typeof wx !== 'undefined' ? wx : null
+				if (wxObj && typeof wxObj.openPrivacyContract === 'function') {
+					wxObj.openPrivacyContract({
+						fail: () => uni.showToast({ title: '打开隐私政策失败', icon: 'none' })
+					})
+					return
+				}
+				uni.showToast({ title: '当前环境不支持打开隐私政策', icon: 'none' })
+			},
+			checkPrivacySetting() {
+				const wxObj = typeof wx !== 'undefined' ? wx : null
+				if (!wxObj || typeof wxObj.getPrivacySetting !== 'function') return
+				wxObj.getPrivacySetting({
+					success: (res) => {
+						if (res && res.needAuthorization) {
+							this.hasAgreedPolicy = false
+						}
+					}
+				})
+			},
 			goBack() {
 				uni.navigateBack();
 			},
 			async submit() {
+				if (!this.hasAgreedPolicy) {
+					return uni.showToast({ title: '请先同意用户服务协议与隐私政策', icon: 'none' })
+				}
 				// 简单校验
 				if (!this.formData.intention) return uni.showToast({
 					title: '请填写咨询内容',
@@ -122,14 +188,30 @@
 					title: '请填写公司名称',
 					icon: 'none'
 				});
-				if (!this.formData.name) return uni.showToast({
+				if (!this.formData.name || !this.formData.name.trim()) return uni.showToast({
 					title: '请填写联系人姓名',
 					icon: 'none'
 				});
-				if (!this.formData.phone) return uni.showToast({
+				if (!this.formData.phone || !this.formData.phone.trim()) return uni.showToast({
 					title: '请填写联系人电话',
 					icon: 'none'
 				});
+
+				// 名字长度校验
+				if (this.formData.name.trim().length > 4) {
+					return uni.showToast({
+						title: '联系人姓名不能超过4个字',
+						icon: 'none'
+					});
+				}
+
+				// 手机号格式校验：1开头，纯数字，11位
+				if (!/^1\d{10}$/.test(this.formData.phone.trim())) {
+					return uni.showToast({
+						title: '请输入正确的11位手机号',
+						icon: 'none'
+					});
+				}
 
 				uni.showLoading({
 					title: '提交中...'
@@ -144,6 +226,19 @@
 						category: this.category, // 使用动态分类
 						status: 0, // 0:待处理
 						assignTenantId: utilsConfig.tenantId // 传递租户ID
+					}
+
+					// 始终尝试传递 servicesTypeId，无论 category 是多少
+					if (this.serviceTypeId !== undefined && this.serviceTypeId !== null && String(this.serviceTypeId) !== '') {
+						const rawId = String(this.serviceTypeId)
+						const shouldCastToNumber = /^\d+$/.test(rawId) && rawId.length <= 15
+						params.servicesTypeId = shouldCastToNumber ? Number(rawId) : rawId
+					}
+
+					if (this.category === 1 || this.category === 2) {
+						const service = this.serviceTypeName || this.serviceName || ''
+						if (service) params.service = service
+						if (this.serviceTypeName) params.serviceTypeName = this.serviceTypeName
 					}
 					
 					await submitTicket(params)
@@ -269,6 +364,24 @@
 		padding: 0 20px;
 		font-size: 14px;
 		box-sizing: border-box;
+	}
+
+	.agreement-row {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		margin-top: 10px;
+		font-size: 12px;
+		color: #666;
+	}
+
+	.agreement-text {
+		margin-left: 6px;
+	}
+
+	.agreement-link {
+		color: #3b82f6;
+		margin-left: 4px;
 	}
 
 	.example-text {

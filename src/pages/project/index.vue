@@ -58,8 +58,7 @@
 	const activities = ref([])
 	const pageList = ref({
 		pageNum: 1,
-		pageSize: 10,
-		status: 0
+		pageSize: 10
 	})
 	const totalCount = ref(0)
 	const isLoading = ref(false)

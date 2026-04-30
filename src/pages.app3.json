@@ -1,0 +1,225 @@
+{
+	"easycom": {
+		"autoscan": true,
+		"custom": {
+			"^u--(.*)": "uview-plus/components/u-$1/u-$1.vue",
+			"^up-(.*)": "uview-plus/components/u-$1/u-$1.vue",
+			"^u-([^-].*)": "uview-plus/components/u-$1/u-$1.vue"
+		}
+	},
+	"pages": [
+		{
+			"path": "pages/Homeconfig/Homeconfig",
+			"style": {
+				"navigationBarTitleText": "首页"
+			}
+		},
+		{
+			"path": "pages/Service/Service",
+			"style": {
+				"navigationBarTitleText": "服务"
+			}
+		},
+		{
+			"path": "pages/Service/funtion/detail",
+			"style": {
+				"navigationBarTitleText": "服务详情"
+			}
+		},
+		{
+			"path": "pages/Course/Course",
+			"style": {
+				"navigationBarTitleText": "活动"
+			}
+		},
+		{
+			"path": "pages/Course/detail",
+			"style": {
+				"navigationBarTitleText": "活动详情"
+			}
+		},
+		{
+			"path": "pages/project/index",
+			"style": {
+				"navigationBarTitleText": "项目"
+			}
+		},
+		{
+			"path": "pages/project/info",
+			"style": {
+				"navigationBarTitleText": "项目详情"
+			}
+		},
+		{
+			"path": "pages/Curriculum/index",
+			"style": {
+				"navigationBarTitleText": "课程"
+			}
+		},
+		{
+			"path": "pages/Curriculum/detail",
+			"style": {
+				"navigationBarTitleText": "课程详情"
+			}
+		},
+		{
+			"path": "pages/Guide/Guide",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "指南"
+			}
+		},
+		{
+			"path": "pages/Myconfig/Myconfig",
+			"style": {
+				"navigationBarTitleText": "我的"
+			}
+		},
+		{
+			"path": "pages/Home/Component/consult",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/Home/Component/user_agreement",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/Home/Component/government",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/Guide/funtion/guide_detail",
+			"style": {
+				"navigationBarTitleText": "详情"
+			}
+		},
+		{
+			"path": "pages/My/funtion/word_order",
+			"style": {
+				"navigationBarTitleText": "工单管理",
+				"navigationBarBackgroundColor": "#007AFF",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/My/funtion/word_order_detail",
+			"style": {
+				"navigationBarTitleText": "工单详情",
+				"navigationBarBackgroundColor": "#007AFF",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/Home/Component/ai_assistant",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/Home/Component/artificial",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/My/funtion/health_record/index",
+			"style": {
+				"navigationBarTitleText": "健康档案"
+			}
+		},
+		{
+			"path": "pages/My/funtion/health_record/add_health_record",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/My/funtion/health_record/health_record_detail",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "健康档案详情"
+			}
+		},
+		{
+			"path": "pages/My/my_service/project/index",
+			"style": {
+				"navigationBarTitleText": "我的项目"
+			}
+		},
+		{
+			"path": "pages/My/my_service/course/index",
+			"style": {
+				"navigationBarTitleText": "我的课程"
+			}
+		},
+		{
+			"path": "pages/My/asset/coupon/index",
+			"style": {
+				"navigationBarTitleText": "优惠券"
+			}
+		},
+		{
+			"path": "pages/My/asset/wallet/index",
+			"style": {
+				"navigationBarTitleText": "我的钱包",
+				"navigationBarBackgroundColor": "#1E88FF",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/Homeconfig/funtion/Health_consultant",
+			"style": {
+				"navigationBarTitleText": "健康咨询师"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "uni-app",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8",
+		"enablePullDownRefresh": true,
+		"backgroundTextStyle": "dark",
+		"app-plus": {
+			"background": "#efeff4"
+		}
+	},
+	"tabBar": {
+		"color": "#7A7E83",
+		"selectedColor": "#1296db",
+		"borderStyle": "black",
+		"backgroundColor": "#ffffff",
+		"list": [
+			{
+				"pagePath": "pages/Homeconfig/Homeconfig",
+				"iconPath": "/static/nav/home.png",
+				"selectedIconPath": "/static/nav/home-active.png",
+				"text": "首页"
+			},
+			{
+				"pagePath": "pages/project/index",
+				"iconPath": "/static/nav/xmu.png",
+				"selectedIconPath": "/static/nav/xmu1.png",
+				"text": "项目"
+			},
+			{
+				"pagePath": "pages/Curriculum/index",
+				"iconPath": "/static/nav/course.png",
+				"selectedIconPath": "/static/nav/course-active.png",
+				"text": "课程"
+			},
+			{
+				"pagePath": "pages/Myconfig/Myconfig",
+				"iconPath": "/static/nav/my.png",
+				"selectedIconPath": "/static/nav/my-active.png",
+				"text": "我的"
+			}
+		]
+	}
+}

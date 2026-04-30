@@ -19,8 +19,9 @@
 			class="chat-content" 
 			scroll-y 
 			:scroll-top="scrollTop"
+			:scroll-into-view="scrollIntoView"
 			:scroll-with-animation="false"
-			:style="{ top: (statusBarHeight + 44) + 'px' }"
+			:style="{ top: (statusBarHeight + 44) + 'px', bottom: chatBottomOffset + 'px' }"
 		>
 			<view class="chat-padding">
 				<view class="ai-notice">回答由AI生成，仅供参考</view>
@@ -36,12 +37,16 @@
 							<view class="dot"></view>
 							<view class="dot"></view>
 						</view>
-						<text 
-							v-else 
-							class="message-text" 
-							:class="msg.role === 'user' ? 'user-text' : ''" 
-							user-select
-						>{{ msg.content }}</text>
+						<view v-else class="content-wrapper">
+							<text 
+								v-if="msg.role === 'user'" 
+								class="message-text user-text" 
+								user-select
+							>{{ msg.content }}</text>
+							<view v-else class="markdown-content">
+								<up-parse :content="parseMarkdown(msg.content)" :tagStyle="markdownTagStyle"></up-parse>
+							</view>
+						</view>
 						
 						<!-- 重新生成按钮 (仅针对最后一条助手消息且非流式传输中) -->
 						<view 
@@ -60,8 +65,8 @@
 					</view>
 				</view>
 				
-				<!-- 垫高底部，防止被固定区域遮挡 -->
-				<view style="height: 180rpx;"></view>
+				<view style="height: 8px;"></view>
+				<view id="chat-bottom-anchor" style="height: 1px;"></view>
 			</view>
 		</scroll-view>
 
@@ -107,12 +112,16 @@
 	import {
 		ref,
 		nextTick,
-		onUnmounted
+		onUnmounted,
+		computed,
+		getCurrentInstance
 	} from 'vue';
 	import {
-		onLoad
+		onLoad,
+		onShow
 	} from '@dcloudio/uni-app';
 	import UniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue';
+	import MarkdownIt from 'markdown-it';
 	import { 
 		createSession 
 	} from '@/api/ai/session.js';
@@ -126,15 +135,79 @@
 	const inputText = ref('');
 	const messages = ref([]);
 	const scrollTop = ref(0);
+	const scrollIntoView = ref('');
 	const isStreaming = ref(false);
 	const isResponseComplete = ref(false);
+	const fixedBottomHeight = ref(0);
+	const chatBottomOffset = computed(() => Math.max(0, fixedBottomHeight.value - 24));
+
+	const markdownTagStyle = {
+		p: 'margin-bottom: 10px; line-height: 1.6; font-size: 28rpx;',
+		h1: 'margin: 20px 0 10px; font-weight: bold; font-size: 36rpx; line-height: 1.4;',
+		h2: 'margin: 16px 0 10px; font-weight: bold; font-size: 32rpx; line-height: 1.4;',
+		h3: 'margin: 12px 0 8px; font-weight: bold; font-size: 30rpx; line-height: 1.4;',
+		h4: 'margin: 10px 0 8px; font-weight: bold; font-size: 28rpx;',
+		ul: 'margin-bottom: 10px; padding-left: 15px;',
+		ol: 'margin-bottom: 10px; padding-left: 15px;',
+		li: 'margin-bottom: 5px; line-height: 1.6;',
+		blockquote: 'margin: 10px 0; padding: 10px; background-color: #f0f0f0; border-left: 4px solid #ccc; color: #666; font-size: 26rpx;',
+		pre: 'margin: 10px 0; padding: 10px; background-color: #f6f8fa; border-radius: 4px; overflow-x: auto; font-size: 24rpx;',
+		code: 'font-family: monospace; background-color: #f6f8fa; padding: 2px 4px; border-radius: 4px; color: #d63384;',
+		hr: 'margin: 15px 0; border: 0; border-top: 1px solid #eee;',
+		strong: 'font-weight: bold; color: #333;',
+		table: 'width: 100%; border-collapse: collapse; margin-bottom: 10px;',
+		th: 'padding: 8px; border: 1px solid #ddd; background-color: #f6f8fa; font-weight: bold;',
+		td: 'padding: 8px; border: 1px solid #ddd;'
+	};
 
 	const queryOptions = ref({});
 	const sessionId = ref('');
 	const currentTask = ref(null); // 当前请求任务
 	const activeRequestId = ref(0);
 
-	const systemPrompt = '你是一名专业的出海投资分析师，专门提供海外投资分析，市场调研，风险评估等专业服务。对标全懂出海-首页-出海分析师特性。';
+	const systemPrompt = `你是“易企出海”研发的智能出海投资分析师，具备深入的海外市场研究能力、专业的投资风险评估能力及精准的出海问题解决方案提供能力，专注于为用户提供海外投资与贸易相关的专业分析、风险识别、投资建议及出海实操问题咨询，所有分析均基于2026年最新的全球市场动态与政策环境。
+核心技能
+技能1：海外投资建议生成
+当用户提出具体投资方向或项目咨询（如“东南亚电商市场投资建议”“欧洲新能源项目选择”等）时，需按以下步骤处理：
+
+明确用户需求：优先提取用户关注的核心信息（目标国家/地区、行业、投资规模、风险承受能力等），若信息不全需进一步引导用户补充；
+市场动态分析：结合2026年最新数据（如目标市场政策法规、经济增长率、行业渗透率等，若信息需实时性验证，需通过工具获取），拆解市场潜力、竞争格局、盈利周期；
+建议结构化输出：从“市场优势-风险点-适配建议”三个维度组织内容，用分点形式呈现，关键信息加粗。
+
+回复示例框架：
+
+�� 目标区域：[具体国家/地区]
+�� 行业匹配：[行业名称]
+�� 核心优势：<如政策红利（2026年新增产业补贴）、人口基数>
+⚠️ 需要警惕的风险：<如外汇管制政策变化、供应链本地化要求>
+✅ 实操建议：<分点列出具体行动建议，如“优先布局物流枢纽城市”>
+
+技能2：海外投资风险评估
+针对用户咨询的“某国家/地区/行业风险分析”（如“印度制造业投资风险”“中东房地产政策风险”等），需：
+
+风险维度拆解：从政治稳定性（政策连续性）、经济环境（通胀率、汇率波动）、法律合规（劳工法、知识产权保护）、市场竞争（本地企业份额、进入壁垒）4个核心维度展开分析；
+2026年动态校准：聚焦当年政策变化（如关税调整、数据隐私法更新），结合历史风险事件回溯影响范围及概率；
+风险标签与应对：将风险按“高/中/低”分级，对应给出可操作的规避或对冲策略（如“高风险区域建议通过合资模式降低单笔投入”）。
+
+技能3：出海问题专项解答
+当用户咨询具体出海环节问题（如“跨境税务申报流程”“东南亚本地化运营文化注意事项”“跨境支付合规要求”等），需：
+
+问题分类定位：快速识别问题类型（政策类/实操类/合规类/供应链类）；
+2026年政策锚定：明确问题涉及的关键节点（如“跨境电商VAT申报需2026年新增的表单调整”），必要时调用工具获取最新政策细则；
+场景化建议：用“问题-原因-解决方案”逻辑链呈现，避免抽象表述，例如解释物流问题时需说明“东南亚雨季对海运时效的影响及备选方案”。
+
+输出格式规范
+
+核心结论前置：每个模块开头用“��【关键结论】”总结核心观点；
+分点逻辑清晰：同一维度内容用“- ”符号分点，避免段落式堆砌；
+拒绝模糊表述：涉及数据需量化（如“市场规模年增长率15%”）。
+
+限制条件
+
+信息时效性：所有2026年相关数据需基于最新公开信息，若涉及工具调用需确保数据为2026年12月前（含）数据；
+地域表述限制：仅允许出现“海外”“目标国家/地区”“中国境外”等中性地域指代，不出现“中国”“本国”等话术；
+内容边界：不涉及任何营销话术、联系方式、网址链接，不引用外部来源，直接回复实质性内容；
+聚焦用户问题：所有回答必须紧扣用户的具体问题，不发散至无关领域（如用户问“巴西物流”，不得主动展开“巴西旅游攻略”）。`;
 	
 	// 当前选中的模型提供方和模型ID
 	const currentProvider = ref('');
@@ -144,6 +217,243 @@
 	const typingQueue = ref([]);
 	const isTyping = ref(false);
 	let typingTimer = null;
+	
+	const instance = getCurrentInstance();
+	
+	const updateFixedBottomHeight = () => {
+		nextTick(() => {
+			const query = uni.createSelectorQuery().in(instance);
+			query.select('.fixed-bottom').boundingClientRect((rect) => {
+				if (!rect) return;
+				const h = Number(rect.height) || 0;
+				if (h > 0) fixedBottomHeight.value = h;
+			}).exec();
+		});
+	};
+
+	const md = new MarkdownIt({
+		html: true,
+		breaks: true,
+		linkify: true
+	});
+
+	const splitTableTitleIfNeeded = (line) => {
+		if (!line) return { title: '', row: '' };
+		if (line.trimStart().startsWith('|')) return { title: '', row: line };
+		const firstPipeIndex = line.indexOf('|');
+		if (firstPipeIndex <= 0) return { title: '', row: line };
+		const title = line.slice(0, firstPipeIndex).trim();
+		const row = line.slice(firstPipeIndex);
+		if (!title) return { title: '', row: line };
+		if (title.length < 4) return { title: '', row: line };
+		if (!/(表[:：]?|一览表|汇总表|对照表)$/.test(title)) return { title: '', row: line };
+		return { title, row };
+	};
+
+	const parseTableCells = (row) => {
+		const trimmed = row.trim();
+		const withoutLeading = trimmed.replace(/^\|/, '');
+		const withoutTrailing = withoutLeading.replace(/\|$/, '');
+		return withoutTrailing.split('|').map((c) => c.trim());
+	};
+
+	const isSeparatorRow = (row) => {
+		const cells = parseTableCells(row);
+		if (cells.length < 2) return false;
+		return cells.every((c) => /^:?-{3,}:?$/.test(c));
+	};
+
+	const normalizeTableRowText = (row) => {
+		let r = row.replace(/^\|\|+/, '|').trimRight();
+		if (!r.trimStart().startsWith('|')) r = `| ${r.trim()}`;
+		if (!/\|\s*$/.test(r)) r = `${r} |`;
+		return r;
+	};
+
+	const buildTableRow = (cells, colCount) => {
+		const normalized = cells.slice(0, colCount);
+		while (normalized.length < colCount) normalized.push('');
+		return `| ${normalized.join(' | ')} |`;
+	};
+
+	const buildSeparatorRow = (colCount) => {
+		return `| ${Array.from({ length: colCount }).map(() => '---').join(' | ')} |`;
+	};
+
+	const normalizeTableBlock = (blockLines) => {
+		const nonEmpty = blockLines.filter((l) => l.trim() !== '');
+		const titleLines = [];
+		const rawRows = [];
+
+		for (const line of nonEmpty) {
+			if (!line.includes('|')) continue;
+			const { title, row } = splitTableTitleIfNeeded(line);
+			if (title) titleLines.push(title);
+			rawRows.push(row);
+		}
+
+		const cleanedRows = rawRows
+			.map((r) => normalizeTableRowText(r))
+			.filter((r) => {
+				const cells = parseTableCells(r);
+				if (cells.length < 2) return false;
+				const joined = cells.join('').trim();
+				if (!joined) return false;
+				if (joined === '-') return false;
+				return true;
+			});
+
+		if (cleanedRows.length < 2) {
+			const fallback = [];
+			for (const t of titleLines) fallback.push(t);
+			for (const l of nonEmpty) fallback.push(`- ${l.trim()}`);
+			return fallback;
+		}
+
+		let headerRow = cleanedRows[0];
+		let separatorRow = cleanedRows[1];
+		let dataRows = cleanedRows.slice(2);
+
+		const headerCells = parseTableCells(headerRow);
+		let colCount = headerCells.length;
+		if (colCount < 2) colCount = 2;
+
+		if (!isSeparatorRow(separatorRow)) {
+			dataRows = cleanedRows.slice(1);
+			separatorRow = buildSeparatorRow(colCount);
+		} else {
+			const sepCells = parseTableCells(separatorRow);
+			if (sepCells.length !== colCount) {
+				separatorRow = buildSeparatorRow(colCount);
+			}
+		}
+
+		const normalizedHeader = buildTableRow(parseTableCells(headerRow), colCount);
+		const normalizedData = dataRows.map((r) => buildTableRow(parseTableCells(r), colCount));
+
+		const result = [];
+		for (const t of titleLines) result.push(t);
+		result.push(normalizedHeader);
+		result.push(separatorRow);
+		for (const r of normalizedData) result.push(r);
+
+		if (normalizedData.length === 0) {
+			result.push(buildTableRow(Array.from({ length: colCount }).map(() => ''), colCount));
+		}
+
+		return result;
+	};
+
+	const normalizeNonTableLine = (line) => {
+		if (line.trim() === '') return [''];
+		let l = line;
+
+		l = l.replace(/^(\s*#{1,6})(\S)/, '$1 $2');
+		l = l.replace(/^(\s*[-*])(\S)/, '$1 $2');
+		l = l.replace(/^(\s*\d+\.)(\S)/, '$1 $2');
+		l = l.replace(/^(\s*>)(\S)/, '$1 $2');
+
+		const hrMatch = l.match(/^(.*?)(-{3,})\s*$/);
+		if (hrMatch) {
+			const before = hrMatch[1].trimEnd();
+			if (before && !before.includes('|')) return [before, '', '---'];
+		}
+
+		const hashIndex = l.search(/#{2,6}/);
+		if (hashIndex > 0) {
+			const before = l.slice(0, hashIndex).trimEnd();
+			const after = l.slice(hashIndex);
+			const m = after.match(/^(#{2,6})\s*(.*)$/);
+			if (m) {
+				const hashes = m[1];
+				const title = (m[2] || '').trim();
+				if (before && title) return [before, '', `${hashes} ${title}`];
+			}
+		}
+
+		return [l];
+	};
+
+	const countPipes = (line) => {
+		let count = 0;
+		for (let i = 0; i < line.length; i++) {
+			if (line[i] === '|') count++;
+		}
+		return count;
+	};
+
+	const looksTableishLine = (line) => {
+		if (!line) return false;
+		const trimmed = line.trim();
+		if (trimmed === '') return false;
+		if (trimmed.startsWith('```')) return false;
+		return countPipes(line) >= 2;
+	};
+
+	const normalizeAiMarkdown = (content) => {
+		const text = String(content).replace(/\r\n?/g, '\n');
+		const lines = text.split('\n');
+		const out = [];
+		let inFence = false;
+
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
+			const isFence = /^\s*```/.test(line);
+			if (isFence) {
+				inFence = !inFence;
+				out.push(line);
+				continue;
+			}
+
+			if (inFence) {
+				out.push(line);
+				continue;
+			}
+
+			if (looksTableishLine(line)) {
+				let hasNext = false;
+				for (let k = i + 1; k < Math.min(lines.length, i + 8); k++) {
+					const nextLine = lines[k];
+					if (/^\s*```/.test(nextLine)) break;
+					if (nextLine.trim() === '') continue;
+					hasNext = looksTableishLine(nextLine);
+					break;
+				}
+
+				if (hasNext) {
+					const block = [];
+					let j = i;
+					for (; j < lines.length; j++) {
+						const l = lines[j];
+						if (/^\s*```/.test(l)) break;
+						if (l.trim() === '' || looksTableishLine(l)) {
+							block.push(l);
+							continue;
+						}
+						break;
+					}
+
+					out.push(...normalizeTableBlock(block));
+					i = j - 1;
+					continue;
+				}
+			}
+
+			out.push(...normalizeNonTableLine(line));
+		}
+
+		return out.join('\n').replace(/\n{3,}/g, '\n\n');
+	};
+
+	// 解析Markdown内容
+	const parseMarkdown = (content) => {
+		if (!content) return '';
+		
+		const processed = normalizeAiMarkdown(content);
+
+		// 渲染为HTML
+		return md.render(processed);
+	};
 
 	const checkAndUnlock = () => {
 		if (isResponseComplete.value && typingQueue.value.length === 0) {
@@ -230,6 +540,12 @@
 		queryOptions.value = options || {};
 		
 		initializeChat();
+		updateFixedBottomHeight();
+	});
+
+	onShow(() => {
+		updateFixedBottomHeight();
+		scrollToBottom();
 	});
 	
 	onUnmounted(() => {
@@ -237,7 +553,15 @@
 	});
 
 	const goBack = () => {
-		uni.navigateBack();
+		const pages = getCurrentPages();
+		console.log('goBack pages length:', pages.length);
+		if (pages.length > 1) {
+			uni.navigateBack();
+		} else {
+			uni.switchTab({
+				url: '/pages/Home/Home'
+			});
+		}
 	};
 
 	const handleNewChat = () => {
@@ -248,6 +572,14 @@
 	};
 
 	const handleSkip = () => {
+		const pages = getCurrentPages();
+		const hasArtificial = pages.some(p => p.route.includes('pages/Home/Component/artificial'));
+		
+		if (hasArtificial) {
+			uni.navigateBack();
+			return;
+		}
+
 		let url = '/pages/Home/Component/artificial';
 		const params = [];
 		if (queryOptions.value.category) params.push(`category=${queryOptions.value.category}`);
@@ -263,9 +595,18 @@
 	};
 	
 	const scrollToBottom = () => {
-		// 使用 nextTick 确保视图更新后再滚动
 		nextTick(() => {
+			updateFixedBottomHeight();
+			scrollIntoView.value = '';
 			scrollTop.value = scrollTop.value + 10000;
+			setTimeout(() => {
+				scrollIntoView.value = 'chat-bottom-anchor';
+				scrollTop.value = scrollTop.value + 10000;
+			}, 16);
+			setTimeout(() => {
+				scrollIntoView.value = 'chat-bottom-anchor';
+				scrollTop.value = scrollTop.value + 10000;
+			}, 120);
 		});
 	};
 	
@@ -429,6 +770,7 @@
 			role: 'assistant',
 			content: '您好！我是智能咨询助手，很高兴为您服务。为了更好地帮助您，请告诉我您需要咨询哪方面的问题？'
 		}];
+		scrollToBottom();
 	};
 	
 	const stopCurrentTask = () => {
@@ -743,12 +1085,10 @@
 	}
 
 	.chat-content {
-		position: absolute;
+		position: fixed;
 		left: 0;
 		right: 0;
-		bottom: 0; 
 		width: 100%;
-		height: 100%;
 	}
 	
 	.chat-padding {
@@ -817,6 +1157,17 @@
 		&.user-bubble {
 			background: #1890ff;
 			box-shadow: 0 4rpx 12rpx rgba(24, 144, 255, 0.2);
+		}
+		
+		.content-wrapper {
+			width: 100%;
+		}
+		
+		.markdown-content {
+			width: 100%;
+			overflow-x: hidden;
+			font-size: 28rpx;
+			line-height: 1.6;
 		}
 	}
 	

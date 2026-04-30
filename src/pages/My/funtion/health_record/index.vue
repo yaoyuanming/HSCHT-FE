@@ -2,7 +2,7 @@
 	<view class="container">
 		<!-- 加载状态 -->
 		<view class="loading-state" v-if="isLoading">
-			<uni-load-more status="loading" content-text='{"loading":"正在查询档案..."}'></uni-load-more>
+			<uni-load-more status="loading" :content-text='{"contentrefresh": "正在查询档案..."}'></uni-load-more>
 		</view>
 
 		<!-- 空状态展示 (仅当不自动跳转时显示，或者作为兜底) -->
@@ -19,15 +19,19 @@
 </template>
 
 <script>
-	import { getHealthRecordList } from '@/api/health_record.js'
+	import api_health_record from '@/api/health_record.js'
 
 	export default {
 		data() {
 			return {
-				isLoading: true
+				statusBarHeight: 20,
+				isLoading: true,
+				recordList: []
 			}
 		},
-		onShow() {
+		onLoad() {
+			const sysInfo = uni.getSystemInfoSync();
+			this.statusBarHeight = sysInfo.statusBarHeight;
 			this.checkHealthRecord();
 		},
 		methods: {
@@ -36,12 +40,11 @@
 				try {
 					const userId = uni.getStorageSync('userId');
 					if (!userId) {
-						// 未登录，直接显示空状态，让用户去创建（会触发登录检查）
 						this.isLoading = false;
 						return;
 					}
 
-					const res = await getHealthRecordList({ userId: userId });
+					const res = await api_health_record.getHealthRecordList({ userId: userId });
 					if (res && res.rows && res.rows.length > 0) {
 						// 有档案，跳转到详情页
 						uni.redirectTo({
@@ -58,7 +61,8 @@
 				}
 			},
 			handleCreate() {
-				uni.navigateTo({
+				// 使用 redirectTo 替换当前空状态页，避免创建成功后详情页返回到空状态页
+				uni.redirectTo({
 					url: '/pages/My/funtion/health_record/add_health_record'
 				})
 			}
