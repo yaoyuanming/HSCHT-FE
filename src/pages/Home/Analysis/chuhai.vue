@@ -99,9 +99,19 @@
 		methods: {
 			async handleGenerate() {
 				// 简单的校验
-				if (!this.formData.country || !this.formData.industry || !this.formData.description) {
+				if (!this.formData.country || !this.formData.industry || !this.formData.description || !this.formData.contact || !this.formData.phone) {
 					uni.showToast({
-						title: '请填写必填项',
+						title: '请填写所有必填项',
+						icon: 'none'
+					})
+					return
+				}
+
+				// 手机号正则校验
+				const phoneReg = /^1[3-9]\d{9}$/
+				if (!phoneReg.test(this.formData.phone)) {
+					uni.showToast({
+						title: '请输入正确的手机号码',
 						icon: 'none'
 					})
 					return

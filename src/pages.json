@@ -9,21 +9,27 @@
 	},
 	"pages": [
 		{
-			"path": "pages/Homeconfig/Homeconfig",
+			"path": "pages/Home/Home",
 			"style": {
-				"navigationBarTitleText": "首页"
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/Service/Service",
 			"style": {
-				"navigationBarTitleText": "服务"
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/Service/funtion/detail",
 			"style": {
-				"navigationBarTitleText": "服务详情"
+				"navigationBarTitleText": "详情"
+			}
+		},
+		{
+			"path": "pages/Service/funtion/business_detail",
+			"style": {
+				"navigationBarTitleText": "考察详情"
 			}
 		},
 		{
@@ -39,41 +45,23 @@
 			}
 		},
 		{
-			"path": "pages/project/index",
-			"style": {
-				"navigationBarTitleText": "项目"
-			}
-		},
-		{
-			"path": "pages/project/info",
-			"style": {
-				"navigationBarTitleText": "项目详情"
-			}
-		},
-		{
-			"path": "pages/Curriculum/index",
-			"style": {
-				"navigationBarTitleText": "课程"
-			}
-		},
-		{
-			"path": "pages/Curriculum/detail",
-			"style": {
-				"navigationBarTitleText": "课程详情"
-			}
-		},
-		{
 			"path": "pages/Guide/Guide",
 			"style": {
 				"navigationStyle": "custom",
-				"navigationBarTitleText": "指南"
+				"navigationBarTitleText": "优品"
 			}
 		},
 		{
-			"path": "pages/Myconfig/Myconfig",
+			"path": "pages/My/My",
 			"style": {
 				"navigationStyle": "custom",
 				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/Home/Component/Home_Service",
+			"style": {
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -148,15 +136,9 @@
 			}
 		},
 		{
-			"path": "pages/My/my_service/project/index",
+			"path": "pages/My/funtion/company_profile/index",
 			"style": {
-				"navigationBarTitleText": "我的项目"
-			}
-		},
-		{
-			"path": "pages/My/my_service/course/index",
-			"style": {
-				"navigationBarTitleText": "我的课程"
+				"navigationBarTitleText": "企业档案"
 			}
 		},
 		{
@@ -174,9 +156,62 @@
 			}
 		},
 		{
-			"path": "pages/Homeconfig/funtion/Health_consultant",
+			"path": "pages/Home/Analysis/chuhai",
 			"style": {
-				"navigationBarTitleText": "健康咨询师"
+				"navigationBarTitleText": "出海分析"
+			}
+		},
+		{
+			"path": "pages/Home/Analysis/history_report",
+			"style": {
+				"navigationBarTitleText": "历史报告",
+				"navigationBarBackgroundColor": "#1E88FF",
+				"navigationBarTextStyle": "white",
+				"enablePullDownRefresh": true,
+				"backgroundTextStyle": "dark"
+			}
+		},
+		{
+			"path": "pages/Home/Analysis/report_example",
+			"style": {
+				"navigationBarTitleText": "报告示例"
+			}
+		},
+		{
+			"path" : "pages/My/funtion/company_profile/add_company",
+			"style" : 
+			{
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path" : "pages/My/funtion/company_profile/compant_detail",
+			"style" : 
+			{
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path" : "pages/Business/business",
+			"style" : 
+			{
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path" : "pages/Youqi/funtion/enterprise_detail",
+			"style" : 
+			{
+				"navigationStyle": "custom",
+				"navigationBarTitleText" : "企业优品详情"
+			}
+		},
+		{
+			"path" : "pages/Youqi/youqi",
+			"style" : 
+			{
+				"navigationStyle": "custom",
+				"navigationBarTitleText" : "优企"
 			}
 		}
 	],
@@ -198,25 +233,31 @@
 		"backgroundColor": "#ffffff",
 		"list": [
 			{
-				"pagePath": "pages/Homeconfig/Homeconfig",
+				"pagePath": "pages/Home/Home",
 				"iconPath": "/static/nav/home.png",
 				"selectedIconPath": "/static/nav/home-active.png",
 				"text": "首页"
 			},
 			{
-				"pagePath": "pages/project/index",
-				"iconPath": "/static/nav/xmu.png",
-				"selectedIconPath": "/static/nav/xmu1.png",
-				"text": "项目"
-			},
-			{
-				"pagePath": "pages/Curriculum/index",
+				"pagePath": "pages/Business/business",
 				"iconPath": "/static/nav/course.png",
 				"selectedIconPath": "/static/nav/course-active.png",
-				"text": "课程"
+				"text": "商业"
 			},
 			{
-				"pagePath": "pages/Myconfig/Myconfig",
+				"pagePath": "pages/Service/Service",
+				"iconPath": "/static/nav/service.png",
+				"selectedIconPath": "/static/nav/service.png",
+				"text": "服务"
+			},
+			{
+				"pagePath": "pages/Youqi/youqi",
+				"iconPath": "/static/nav/guide.png",
+				"selectedIconPath": "/static/nav/guide-active.png",
+				"text": "优企"
+			},
+			{
+				"pagePath": "pages/My/My",
 				"iconPath": "/static/nav/my.png",
 				"selectedIconPath": "/static/nav/my-active.png",
 				"text": "我的"
